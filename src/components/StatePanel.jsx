@@ -1,0 +1,489 @@
+import { memo } from "react";
+import { stateData } from "../data/states";
+import { getStateResearch } from "../data/research";
+import ResearchCard from "./ResearchCard";
+import { colors, typography, spacing } from "../designTokens";
+
+const CloseIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
+const CalendarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+  </svg>
+);
+
+const BillIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+  </svg>
+);
+
+const LinkIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={colors.text.tertiary} strokeWidth="2" style={{ flexShrink: 0, marginTop: "2px" }}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+  </svg>
+);
+
+// Section Header component
+function SectionHeader({ children }) {
+  return (
+    <h3 style={{
+      margin: `0 0 ${spacing.md}`,
+      color: colors.text.tertiary,
+      fontSize: typography.fontSize.xs,
+      fontWeight: typography.fontWeight.semibold,
+      fontFamily: typography.fontFamily.primary,
+      textTransform: "uppercase",
+      letterSpacing: "0.5px",
+    }}>{children}</h3>
+  );
+}
+
+const StatePanel = memo(({ stateAbbr, onClose }) => {
+  const state = stateData[stateAbbr];
+  const research = getStateResearch(stateAbbr);
+
+  if (!state) return null;
+
+  // Separate research by status
+  const published = research.filter((r) => r.status === "published");
+  const inProgress = research.filter((r) => r.status === "in_progress");
+  const planned = research.filter((r) => r.status === "planned");
+
+  // Separate state-specific from federal
+  const stateSpecific = published.filter((r) => r.state === stateAbbr);
+  const federal = published.filter((r) => r.state === "all" || (r.relevantStates && r.relevantStates.includes(stateAbbr)));
+
+  return (
+    <div
+      className="animate-fade-in"
+      style={{
+        backgroundColor: colors.white,
+        borderRadius: spacing.radius["2xl"],
+        boxShadow: "var(--shadow-elevation-medium)",
+        border: `1px solid ${colors.border.light}`,
+        overflow: "hidden",
+      }}
+    >
+      {/* Header */}
+      <div style={{
+        padding: `${spacing.lg} ${spacing["2xl"]}`,
+        background: `linear-gradient(135deg, ${colors.primary[600]} 0%, ${colors.primary[700]} 100%)`,
+        position: "relative",
+      }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <div>
+            <h2 style={{
+              margin: 0,
+              color: colors.white,
+              fontSize: typography.fontSize["2xl"],
+              fontWeight: typography.fontWeight.bold,
+              fontFamily: typography.fontFamily.primary,
+              letterSpacing: "-0.02em",
+            }}>{state.name}</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: spacing.md, marginTop: spacing.sm }}>
+              <span style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: spacing.xs,
+                padding: `${spacing.xs} ${spacing.sm}`,
+                borderRadius: spacing.radius.md,
+                backgroundColor: "rgba(255,255,255,0.2)",
+                color: colors.white,
+                fontSize: typography.fontSize.xs,
+                fontFamily: typography.fontFamily.body,
+                fontWeight: typography.fontWeight.medium,
+              }}>
+                <CalendarIcon />
+                {state.session.dates}
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{
+              padding: spacing.sm,
+              border: "none",
+              borderRadius: spacing.radius.lg,
+              backgroundColor: "rgba(255,255,255,0.1)",
+              color: colors.white,
+              cursor: "pointer",
+              transition: "background-color 0.2s ease",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.2)"}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.1)"}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{ padding: spacing["2xl"], maxHeight: "70vh", overflowY: "auto" }}>
+
+        {/* 2026 Legislative Activity */}
+        {(state.activeBills?.length > 0 || state.taxChanges?.length > 0) && (
+          <div style={{ marginBottom: spacing["2xl"] }}>
+            <SectionHeader>2026 Legislative Activity</SectionHeader>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
+              {state.taxChanges?.map((change, i) => (
+                <a
+                  key={i}
+                  href={change.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: spacing.md,
+                    padding: spacing.md,
+                    backgroundColor: `${colors.primary[600]}08`,
+                    border: `1px solid ${colors.primary[600]}25`,
+                    borderRadius: spacing.radius.lg,
+                    textDecoration: "none",
+                    transition: "background-color 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${colors.primary[600]}15`}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = `${colors.primary[600]}08`}
+                >
+                  <div style={{
+                    flexShrink: 0,
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    backgroundColor: `${colors.primary[600]}15`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}>
+                    <span style={{ color: colors.primary[700], fontSize: typography.fontSize.xs, fontWeight: typography.fontWeight.bold }}>TAX</span>
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      margin: 0,
+                      color: colors.secondary[900],
+                      fontSize: typography.fontSize.sm,
+                      fontWeight: typography.fontWeight.semibold,
+                      fontFamily: typography.fontFamily.body,
+                    }}>{change.change}</p>
+                    <p style={{
+                      margin: `${spacing.xs} 0 0`,
+                      color: colors.text.secondary,
+                      fontSize: typography.fontSize.xs,
+                      fontFamily: typography.fontFamily.body,
+                    }}>
+                      Effective: {change.effective} • {change.impact}
+                    </p>
+                  </div>
+                  <LinkIcon />
+                </a>
+              ))}
+              {state.activeBills?.map((bill, i) => (
+                <a
+                  key={i}
+                  href={bill.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: spacing.md,
+                    padding: spacing.md,
+                    backgroundColor: `${colors.primary[400]}15`,
+                    border: `1px solid ${colors.primary[400]}30`,
+                    borderRadius: spacing.radius.lg,
+                    textDecoration: "none",
+                    transition: "background-color 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${colors.primary[400]}25`}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = `${colors.primary[400]}15`}
+                >
+                  <div style={{
+                    flexShrink: 0,
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    backgroundColor: `${colors.primary[400]}25`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: colors.primary[700],
+                  }}>
+                    <BillIcon />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      margin: 0,
+                      color: colors.secondary[900],
+                      fontSize: typography.fontSize.sm,
+                      fontWeight: typography.fontWeight.semibold,
+                      fontFamily: typography.fontFamily.body,
+                    }}>{bill.bill}</p>
+                    <p style={{
+                      margin: `${spacing.xs} 0 0`,
+                      color: colors.text.secondary,
+                      fontSize: typography.fontSize.xs,
+                      fontFamily: typography.fontFamily.body,
+                    }}>
+                      <span style={{
+                        display: "inline-block",
+                        padding: `2px ${spacing.xs}`,
+                        borderRadius: spacing.radius.sm,
+                        marginRight: spacing.sm,
+                        fontSize: typography.fontSize.xs,
+                        fontWeight: typography.fontWeight.medium,
+                        backgroundColor: bill.status === 'enacted' ? `${colors.primary[600]}20` : `${colors.warning}20`,
+                        color: bill.status === 'enacted' ? colors.primary[700] : "#B45309",
+                      }}>
+                        {bill.status}
+                      </span>
+                      {bill.description}
+                    </p>
+                  </div>
+                  <LinkIcon />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* OBBBA Exposure */}
+        {state.obbbaExposure && (
+          <div style={{
+            marginBottom: spacing["2xl"],
+            padding: spacing.md,
+            backgroundColor: `${colors.warning}10`,
+            border: `1px solid ${colors.warning}30`,
+            borderRadius: spacing.radius.lg,
+          }}>
+            <h4 style={{
+              margin: `0 0 ${spacing.xs}`,
+              color: "#B45309",
+              fontSize: typography.fontSize.sm,
+              fontWeight: typography.fontWeight.semibold,
+              fontFamily: typography.fontFamily.primary,
+            }}>OBBBA Exposure</h4>
+            <p style={{
+              margin: 0,
+              color: "#92400E",
+              fontSize: typography.fontSize.sm,
+              fontFamily: typography.fontFamily.body,
+            }}>{state.obbbaExposure.note}</p>
+            <div style={{ display: "flex", gap: spacing.lg, marginTop: spacing.sm }}>
+              <span style={{ fontSize: typography.fontSize.xs, color: "#92400E" }}>
+                SNAP: <strong>{state.obbbaExposure.snap}</strong>
+              </span>
+              <span style={{ fontSize: typography.fontSize.xs, color: "#92400E" }}>
+                Medicaid: <strong>{state.obbbaExposure.medicaid}</strong>
+              </span>
+            </div>
+          </div>
+        )}
+
+
+        {/* In Progress Research */}
+        {inProgress.length > 0 && (
+          <div style={{ marginBottom: spacing["2xl"] }}>
+            <SectionHeader>Analysis In Progress</SectionHeader>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+              {inProgress.map((item) => (
+                <ResearchCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* State-Specific Research */}
+        {stateSpecific.length > 0 && (
+          <div style={{ marginBottom: spacing["2xl"] }}>
+            <SectionHeader>Published Research</SectionHeader>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+              {stateSpecific.map((item) => (
+                <ResearchCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Federal Tools */}
+        {federal.length > 0 && (
+          <div style={{ marginBottom: spacing["2xl"] }}>
+            <SectionHeader>Federal Tools</SectionHeader>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+              {federal
+                .filter((item) => item.federalToolOrder !== undefined)
+                .sort((a, b) => a.federalToolOrder - b.federalToolOrder)
+                .map((item) => (
+                  <ResearchCard key={item.id} item={item} />
+                ))}
+            </div>
+          </div>
+        )}
+
+        {/* Planned Research */}
+        {planned.length > 0 && (
+          <div style={{ marginBottom: spacing["2xl"] }}>
+            <SectionHeader>Planned</SectionHeader>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.md }}>
+              {planned.map((item) => (
+                <ResearchCard key={item.id} item={item} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Past Legislation */}
+        {state.pastLegislation?.length > 0 && (
+          <div style={{ marginBottom: spacing["2xl"] }}>
+            <SectionHeader>Past Legislation</SectionHeader>
+            <div style={{ display: "flex", flexDirection: "column", gap: spacing.sm }}>
+              {state.pastLegislation.map((bill, i) => (
+                <a
+                  key={i}
+                  href={bill.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: spacing.md,
+                    padding: spacing.md,
+                    backgroundColor: colors.gray[50],
+                    border: `1px solid ${colors.border.light}`,
+                    borderRadius: spacing.radius.lg,
+                    textDecoration: "none",
+                    transition: "background-color 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.gray[100]}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.gray[50]}
+                >
+                  <div style={{
+                    flexShrink: 0,
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    backgroundColor: colors.gray[200],
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: colors.text.secondary,
+                  }}>
+                    <BillIcon />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <p style={{
+                      margin: 0,
+                      color: colors.secondary[900],
+                      fontSize: typography.fontSize.sm,
+                      fontWeight: typography.fontWeight.semibold,
+                      fontFamily: typography.fontFamily.body,
+                    }}>{bill.bill}</p>
+                    <p style={{
+                      margin: `${spacing.xs} 0 0`,
+                      color: colors.text.secondary,
+                      fontSize: typography.fontSize.xs,
+                      fontFamily: typography.fontFamily.body,
+                    }}>
+                      <span style={{
+                        display: "inline-block",
+                        padding: `2px ${spacing.xs}`,
+                        borderRadius: spacing.radius.sm,
+                        marginRight: spacing.sm,
+                        fontSize: typography.fontSize.xs,
+                        fontWeight: typography.fontWeight.medium,
+                        backgroundColor: colors.gray[200],
+                        color: colors.text.secondary,
+                      }}>
+                        {bill.year}
+                      </span>
+                      {bill.description}
+                    </p>
+                  </div>
+                  <LinkIcon />
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* No activity message */}
+        {stateSpecific.length === 0 && inProgress.length === 0 && !state.taxChanges?.length && !state.activeBills?.length && !state.pastLegislation?.length && (
+          <div style={{ textAlign: "center", padding: spacing["2xl"] }}>
+            <p style={{
+              margin: 0,
+              color: colors.text.secondary,
+              fontSize: typography.fontSize.sm,
+              fontFamily: typography.fontFamily.body,
+            }}>
+              No major tax legislation currently tracked for {state.name}.
+            </p>
+            <p style={{
+              margin: `${spacing.sm} 0 0`,
+              color: colors.text.tertiary,
+              fontSize: typography.fontSize.xs,
+              fontFamily: typography.fontFamily.body,
+            }}>
+              Session: {state.session.dates}
+            </p>
+          </div>
+        )}
+
+        {/* CTA */}
+        <div style={{
+          marginTop: spacing["2xl"],
+          paddingTop: spacing["2xl"],
+          borderTop: `1px solid ${colors.border.light}`,
+        }}>
+          <div style={{
+            padding: spacing.lg,
+            backgroundColor: colors.background.secondary,
+            borderRadius: spacing.radius.xl,
+          }}>
+            <h4 style={{
+              margin: `0 0 ${spacing.sm}`,
+              color: colors.secondary[900],
+              fontSize: typography.fontSize.base,
+              fontWeight: typography.fontWeight.semibold,
+              fontFamily: typography.fontFamily.primary,
+            }}>
+              Need analysis for {state.name}?
+            </h4>
+            <p style={{
+              margin: `0 0 ${spacing.md}`,
+              color: colors.text.secondary,
+              fontSize: typography.fontSize.sm,
+              fontFamily: typography.fontFamily.body,
+            }}>
+              We can model proposed tax changes and provide distributional analysis for your state's legislative session.
+            </p>
+            <a
+              href={`mailto:hello@policyengine.org?subject=Analysis Request: ${state.name} Legislative Session`}
+              className="btn-primary"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: spacing.sm,
+                padding: `${spacing.sm} ${spacing.lg}`,
+                textDecoration: "none",
+                borderRadius: spacing.radius.lg,
+                fontSize: typography.fontSize.sm,
+                fontWeight: typography.fontWeight.semibold,
+                fontFamily: typography.fontFamily.primary,
+              }}
+            >
+              Request Analysis
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+});
+
+StatePanel.displayName = "StatePanel";
+
+export default StatePanel;
