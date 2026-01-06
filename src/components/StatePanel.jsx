@@ -85,7 +85,7 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
               fontFamily: typography.fontFamily.primary,
               letterSpacing: "-0.02em",
             }}>{state.name}</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: spacing.md, marginTop: spacing.sm }}>
+            <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
               <span style={{
                 display: "inline-flex",
                 alignItems: "center",
@@ -101,6 +101,23 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
                 <CalendarIcon />
                 {state.session.dates}
               </span>
+              {state.session.carryover !== undefined && (
+                <span style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: `${spacing.xs} ${spacing.sm}`,
+                  borderRadius: spacing.radius.md,
+                  backgroundColor: state.session.carryover ? "rgba(34,197,94,0.3)" : "rgba(239,68,68,0.3)",
+                  color: colors.white,
+                  fontSize: typography.fontSize.xs,
+                  fontFamily: typography.fontFamily.body,
+                  fontWeight: typography.fontWeight.medium,
+                }}
+                title={state.session.carryover ? "Bills from 2025 carry over to 2026" : "Bills do not carry over from 2025"}
+                >
+                  {state.session.carryover ? "Carryover" : "No carryover"}
+                </span>
+              )}
             </div>
           </div>
           <button

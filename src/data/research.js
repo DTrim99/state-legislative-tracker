@@ -167,22 +167,6 @@ export const research = [
     tags: ["tax-cuts", "credits"],
   },
   {
-    id: "mi-hb4170",
-    state: "MI",
-    type: "blog",
-    status: "published",
-    title: "Michigan Bill HB4170",
-    url: "https://policyengine.org/us/research/michigan-bill-hb4170",
-    date: "2025-03",
-    author: "Pavel Makarchuk",
-    description: "Cutting the rate from 4.25% to 4.05% would cost $644 million",
-    keyFindings: [
-      "Benefits distributed across income levels",
-      "Reduces effective tax rates for all filers",
-    ],
-    tags: ["tax-cuts", "income-tax"],
-  },
-  {
     id: "mn-hf1938",
     state: "MN",
     type: "blog",
