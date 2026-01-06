@@ -5,7 +5,7 @@ export const stateData = {
   AL: {
     name: "Alabama",
     abbr: "AL",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 13 - Mar 27, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5%", brackets: 3 },
       stateEITC: { available: false },
@@ -17,7 +17,7 @@ export const stateData = {
   AK: {
     name: "Alaska",
     abbr: "AK",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 20 - May 20, 2026" },
     policyLevers: {
       incomeTax: { available: false, note: "No state income tax" },
       stateEITC: { available: false },
@@ -29,7 +29,7 @@ export const stateData = {
   AZ: {
     name: "Arizona",
     abbr: "AZ",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 12 - Apr 25, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "2.5%" },
       stateEITC: { available: false },
@@ -41,7 +41,7 @@ export const stateData = {
   AR: {
     name: "Arkansas",
     abbr: "AR",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Apr 8 - May 7, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "4.4%", brackets: 3 },
       stateEITC: { available: false },
@@ -53,7 +53,7 @@ export const stateData = {
   CA: {
     name: "California",
     abbr: "CA",
-    session: { status: "active", dates: "Year-round" },
+    session: { status: "active", dates: "Jan 5 - Aug 31, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "13.3%", brackets: 9 },
       stateEITC: { available: true, name: "CalEITC", type: "custom" },
@@ -68,7 +68,7 @@ export const stateData = {
   CO: {
     name: "Colorado",
     abbr: "CO",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 14 - May 13, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "4.4%" },
       stateEITC: { available: true, name: "Colorado EITC", match: "25%" },
@@ -80,7 +80,7 @@ export const stateData = {
   CT: {
     name: "Connecticut",
     abbr: "CT",
-    session: { status: "active", dates: "Jan-Jun 2026" },
+    session: { status: "active", dates: "Feb 4 - May 6, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "6.99%", brackets: 7 },
       stateEITC: { available: true, match: "30.5%" },
@@ -92,7 +92,7 @@ export const stateData = {
   DE: {
     name: "Delaware",
     abbr: "DE",
-    session: { status: "active", dates: "Jan-Jun 2026" },
+    session: { status: "active", dates: "Jan 13 - Jun 30, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "6.6%", brackets: 7 },
       stateEITC: { available: false },
@@ -104,7 +104,7 @@ export const stateData = {
   FL: {
     name: "Florida",
     abbr: "FL",
-    session: { status: "active", dates: "Mar-May 2026" },
+    session: { status: "active", dates: "Jan 13 - Mar 13, 2026" },
     policyLevers: {
       incomeTax: { available: false, note: "No state income tax" },
       stateEITC: { available: false },
@@ -116,7 +116,7 @@ export const stateData = {
   GA: {
     name: "Georgia",
     abbr: "GA",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 12 - Apr 6, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "5.19%" },
       stateEITC: { available: false },
@@ -131,7 +131,7 @@ export const stateData = {
   HI: {
     name: "Hawaii",
     abbr: "HI",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 21 - May 7, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "11%", brackets: 12 },
       stateEITC: { available: true, match: "20%" },
@@ -143,7 +143,7 @@ export const stateData = {
   ID: {
     name: "Idaho",
     abbr: "ID",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 12 - Apr 10, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "5.8%" },
       stateEITC: { available: false },
@@ -158,7 +158,7 @@ export const stateData = {
   IL: {
     name: "Illinois",
     abbr: "IL",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 14 - May 31, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "4.95%" },
       stateEITC: { available: true, match: "20%" },
@@ -170,7 +170,7 @@ export const stateData = {
   IN: {
     name: "Indiana",
     abbr: "IN",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Dec 1, 2025 - Feb 27, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "3.05%" },
       stateEITC: { available: true, match: "10%" },
@@ -182,7 +182,7 @@ export const stateData = {
   IA: {
     name: "Iowa",
     abbr: "IA",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 12 - Apr 21, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "3.8%" },
       stateEITC: { available: true, match: "15%" },
@@ -194,7 +194,7 @@ export const stateData = {
   KS: {
     name: "Kansas",
     abbr: "KS",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 12 - Apr 10, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5.7%", brackets: 3 },
       stateEITC: { available: true, match: "17%" },
@@ -212,7 +212,7 @@ export const stateData = {
   KY: {
     name: "Kentucky",
     abbr: "KY",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 6 - Apr 15, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "3.5%" },
       stateEITC: { available: false },
@@ -227,7 +227,7 @@ export const stateData = {
   LA: {
     name: "Louisiana",
     abbr: "LA",
-    session: { status: "active", dates: "Apr-Jun 2026" },
+    session: { status: "active", dates: "Mar 9 - Jun 1, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "3%" },
       stateEITC: { available: true, match: "5%" },
@@ -242,7 +242,7 @@ export const stateData = {
   ME: {
     name: "Maine",
     abbr: "ME",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 7 - Apr 15, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "7.15%", brackets: 3 },
       stateEITC: { available: true, match: "25%" },
@@ -254,7 +254,7 @@ export const stateData = {
   MD: {
     name: "Maryland",
     abbr: "MD",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 14 - Apr 13, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5.75%", brackets: 8 },
       stateEITC: { available: true, match: "45%" },
@@ -266,7 +266,7 @@ export const stateData = {
   MA: {
     name: "Massachusetts",
     abbr: "MA",
-    session: { status: "active", dates: "Jan-Jul 2026" },
+    session: { status: "active", dates: "Jan 7 - Jul 31, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "5%", note: "+ 4% millionaire surtax" },
       stateEITC: { available: true, match: "40%" },
@@ -278,7 +278,7 @@ export const stateData = {
   MI: {
     name: "Michigan",
     abbr: "MI",
-    session: { status: "active", dates: "Year-round" },
+    session: { status: "active", dates: "Jan 14 - Dec 31, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "4.25%" },
       stateEITC: { available: true, match: "30%" },
@@ -292,7 +292,7 @@ export const stateData = {
   MN: {
     name: "Minnesota",
     abbr: "MN",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Feb 17 - May 18, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "9.85%", brackets: 4 },
       stateEITC: { available: true, name: "Working Family Credit", type: "custom" },
@@ -304,7 +304,7 @@ export const stateData = {
   MS: {
     name: "Mississippi",
     abbr: "MS",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 6 - Apr 5, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "4.7%" },
       stateEITC: { available: false },
@@ -319,7 +319,7 @@ export const stateData = {
   MO: {
     name: "Missouri",
     abbr: "MO",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 7 - May 15, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "4.8%", brackets: 10 },
       stateEITC: { available: false },
@@ -346,7 +346,7 @@ export const stateData = {
   NE: {
     name: "Nebraska",
     abbr: "NE",
-    session: { status: "active", dates: "Jan-Jun 2026" },
+    session: { status: "active", dates: "Jan 7 - Apr 17, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5.84%", brackets: 4 },
       stateEITC: { available: true, match: "10%" },
@@ -370,7 +370,7 @@ export const stateData = {
   NH: {
     name: "New Hampshire",
     abbr: "NH",
-    session: { status: "active", dates: "Jan-Jun 2026" },
+    session: { status: "active", dates: "Jan 7 - Jun 30, 2026" },
     policyLevers: {
       incomeTax: { available: false, note: "No wage income tax (I&D tax phasing out)" },
       stateEITC: { available: false },
@@ -382,7 +382,7 @@ export const stateData = {
   NJ: {
     name: "New Jersey",
     abbr: "NJ",
-    session: { status: "active", dates: "Year-round" },
+    session: { status: "active", dates: "Jan 13 - Dec 31, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "10.75%", brackets: 7 },
       stateEITC: { available: true, match: "40%" },
@@ -394,7 +394,7 @@ export const stateData = {
   NM: {
     name: "New Mexico",
     abbr: "NM",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 20 - Feb 19, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5.9%", brackets: 5 },
       stateEITC: { available: true, match: "25%" },
@@ -406,7 +406,7 @@ export const stateData = {
   NY: {
     name: "New York",
     abbr: "NY",
-    session: { status: "active", dates: "Jan-Jun 2026" },
+    session: { status: "active", dates: "Jan 7 - Jun 4, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "10.9%", brackets: 9 },
       stateEITC: { available: true, match: "30%" },
@@ -423,7 +423,7 @@ export const stateData = {
   NC: {
     name: "North Carolina",
     abbr: "NC",
-    session: { status: "active", dates: "Jan-Jul 2026" },
+    session: { status: "active", dates: "Apr 21 - Aug 31, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "3.99%" },
       stateEITC: { available: false },
@@ -450,7 +450,7 @@ export const stateData = {
   OH: {
     name: "Ohio",
     abbr: "OH",
-    session: { status: "active", dates: "Year-round" },
+    session: { status: "active", dates: "Jan 5 - Dec 31, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "2.75%" },
       stateEITC: { available: true, match: "30%" },
@@ -465,7 +465,7 @@ export const stateData = {
   OK: {
     name: "Oklahoma",
     abbr: "OK",
-    session: { status: "active", dates: "Feb-May 2026" },
+    session: { status: "active", dates: "Feb 2 - May 29, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "4.5%", brackets: 6 },
       stateEITC: { available: true, match: "5%" },
@@ -480,7 +480,7 @@ export const stateData = {
   OR: {
     name: "Oregon",
     abbr: "OR",
-    session: { status: "active", dates: "Feb-Jun 2026" },
+    session: { status: "active", dates: "Feb 2 - Mar 9, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "9.9%", brackets: 4 },
       stateEITC: { available: true, match: "12%" },
@@ -492,7 +492,7 @@ export const stateData = {
   PA: {
     name: "Pennsylvania",
     abbr: "PA",
-    session: { status: "active", dates: "Year-round" },
+    session: { status: "active", dates: "Jan 6 - Nov 30, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "3.07%" },
       stateEITC: { available: false },
@@ -504,7 +504,7 @@ export const stateData = {
   RI: {
     name: "Rhode Island",
     abbr: "RI",
-    session: { status: "active", dates: "Jan-Jun 2026" },
+    session: { status: "active", dates: "Jan 6 - Jun 30, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5.99%", brackets: 3 },
       stateEITC: { available: true, match: "15%" },
@@ -516,7 +516,7 @@ export const stateData = {
   SC: {
     name: "South Carolina",
     abbr: "SC",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 13 - May 7, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "6.4%", brackets: 3 },
       stateEITC: { available: false },
@@ -530,7 +530,7 @@ export const stateData = {
   SD: {
     name: "South Dakota",
     abbr: "SD",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 13 - Mar 30, 2026" },
     policyLevers: {
       incomeTax: { available: false, note: "No state income tax" },
       stateEITC: { available: false },
@@ -542,7 +542,7 @@ export const stateData = {
   TN: {
     name: "Tennessee",
     abbr: "TN",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 13 - Apr 24, 2026" },
     policyLevers: {
       incomeTax: { available: false, note: "No state income tax" },
       stateEITC: { available: false },
@@ -566,7 +566,7 @@ export const stateData = {
   UT: {
     name: "Utah",
     abbr: "UT",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 20 - Mar 6, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "flat", topRate: "4.65%" },
       stateEITC: { available: true, match: "15%" },
@@ -581,7 +581,7 @@ export const stateData = {
   VT: {
     name: "Vermont",
     abbr: "VT",
-    session: { status: "active", dates: "Jan-May 2026" },
+    session: { status: "active", dates: "Jan 6 - May 8, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "8.75%", brackets: 4 },
       stateEITC: { available: true, match: "38%" },
@@ -593,7 +593,7 @@ export const stateData = {
   VA: {
     name: "Virginia",
     abbr: "VA",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 14 - Mar 14, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5.75%", brackets: 4 },
       stateEITC: { available: true, match: "20%" },
@@ -605,7 +605,7 @@ export const stateData = {
   WA: {
     name: "Washington",
     abbr: "WA",
-    session: { status: "active", dates: "Jan-Apr 2026" },
+    session: { status: "active", dates: "Jan 12 - Mar 12, 2026" },
     policyLevers: {
       incomeTax: { available: false, note: "No wage income tax (7% capital gains)" },
       stateEITC: { available: true, name: "Working Families Tax Credit", type: "custom" },
@@ -617,7 +617,7 @@ export const stateData = {
   WV: {
     name: "West Virginia",
     abbr: "WV",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 14 - Mar 14, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "5.12%", brackets: 5 },
       stateEITC: { available: false },
@@ -629,7 +629,7 @@ export const stateData = {
   WI: {
     name: "Wisconsin",
     abbr: "WI",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Jan 13 - Mar 19, 2026" },
     policyLevers: {
       incomeTax: { available: true, type: "graduated", topRate: "7.65%", brackets: 4 },
       stateEITC: { available: true, match: "11%" },
@@ -641,7 +641,7 @@ export const stateData = {
   WY: {
     name: "Wyoming",
     abbr: "WY",
-    session: { status: "active", dates: "Jan-Mar 2026" },
+    session: { status: "active", dates: "Feb 9 - Mar 6, 2026" },
     policyLevers: {
       incomeTax: { available: false, note: "No state income tax" },
       stateEITC: { available: false },
