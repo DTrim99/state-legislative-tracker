@@ -434,7 +434,6 @@ export const stateData = {
     taxChanges: [
       { change: "Flat 3.99%", effective: "Jan 2026", impact: "Continued rate reduction", url: "https://www.ncleg.gov/BillLookUp/2023/H259" }
     ],
-    obbbaExposure: { snap: "high", medicaid: "high", note: "High SNAP error rate exposure" },
   },
   ND: {
     name: "North Dakota",
@@ -563,7 +562,6 @@ export const stateData = {
     },
     legislativeActivity: "low",
     activeBills: [],
-    obbbaExposure: { snap: "high", medicaid: "high", note: "Large SNAP/Medicaid population" },
   },
   UT: {
     name: "Utah",

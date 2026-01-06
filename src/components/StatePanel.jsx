@@ -251,38 +251,6 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
           </div>
         )}
 
-        {/* OBBBA Exposure */}
-        {state.obbbaExposure && (
-          <div style={{
-            marginBottom: spacing["2xl"],
-            padding: spacing.md,
-            backgroundColor: `${colors.warning}10`,
-            border: `1px solid ${colors.warning}30`,
-            borderRadius: spacing.radius.lg,
-          }}>
-            <h4 style={{
-              margin: `0 0 ${spacing.xs}`,
-              color: "#B45309",
-              fontSize: typography.fontSize.sm,
-              fontWeight: typography.fontWeight.semibold,
-              fontFamily: typography.fontFamily.primary,
-            }}>OBBBA Exposure</h4>
-            <p style={{
-              margin: 0,
-              color: "#92400E",
-              fontSize: typography.fontSize.sm,
-              fontFamily: typography.fontFamily.body,
-            }}>{state.obbbaExposure.note}</p>
-            <div style={{ display: "flex", gap: spacing.lg, marginTop: spacing.sm }}>
-              <span style={{ fontSize: typography.fontSize.xs, color: "#92400E" }}>
-                SNAP: <strong>{state.obbbaExposure.snap}</strong>
-              </span>
-              <span style={{ fontSize: typography.fontSize.xs, color: "#92400E" }}>
-                Medicaid: <strong>{state.obbbaExposure.medicaid}</strong>
-              </span>
-            </div>
-          </div>
-        )}
 
 
         {/* In Progress Research */}
