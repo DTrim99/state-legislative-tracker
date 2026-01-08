@@ -1,0 +1,83 @@
+import { useState, useCallback } from "react";
+
+const API_BASE = "https://api.policyengine.org";
+
+export function usePolicyEngineAPI() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const calculateHousehold = useCallback(async (household, reform = null) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const payload = { household };
+
+      if (reform) {
+        // Convert reform to API format with date ranges
+        const apiPolicy = {};
+        for (const [key, value] of Object.entries(reform)) {
+          if (typeof value === "object" && value !== null) {
+            // Convert year keys to date range format
+            apiPolicy[key] = {};
+            for (const [period, val] of Object.entries(value)) {
+              // If it's just a year, convert to date range format
+              if (/^\d{4}$/.test(period)) {
+                apiPolicy[key][`${period}-01-01.2100-12-31`] = val;
+              } else {
+                apiPolicy[key][period] = val;
+              }
+            }
+          } else {
+            apiPolicy[key] = value;
+          }
+        }
+        payload.policy = apiPolicy;
+      }
+
+      console.log("API payload:", JSON.stringify(payload, null, 2));
+
+      const response = await fetch(`${API_BASE}/us/calculate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("API error response:", data);
+        throw new Error(data.message || data.error || `API error: ${response.status}`);
+      }
+
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const compareReform = useCallback(async (household, reformParameters) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Run baseline and reform calculations in parallel
+      const [baseline, reform] = await Promise.all([
+        calculateHousehold(household),
+        calculateHousehold(household, reformParameters),
+      ]);
+
+      return { baseline, reform };
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [calculateHousehold]);
+
+  return { calculateHousehold, compareReform, loading, error };
+}

@@ -1,7 +1,8 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { stateData } from "../data/states";
 import { getStateResearch } from "../data/research";
 import ResearchCard from "./ResearchCard";
+import ReformAnalyzer from "./reform/ReformAnalyzer";
 import { colors, typography, spacing } from "../designTokens";
 
 const CloseIcon = () => (
@@ -28,6 +29,16 @@ const LinkIcon = () => (
   </svg>
 );
 
+const CalculatorIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="4" y="2" width="16" height="20" rx="2" />
+    <line x1="8" y1="6" x2="16" y2="6" />
+    <line x1="8" y1="10" x2="8" y2="10.01" />
+    <line x1="12" y1="10" x2="12" y2="10.01" />
+    <line x1="16" y1="10" x2="16" y2="10.01" />
+  </svg>
+);
+
 // Section Header component
 function SectionHeader({ children }) {
   return (
@@ -46,6 +57,7 @@ function SectionHeader({ children }) {
 const StatePanel = memo(({ stateAbbr, onClose }) => {
   const state = stateData[stateAbbr];
   const research = getStateResearch(stateAbbr);
+  const [activeBill, setActiveBill] = useState(null);
 
   if (!state) return null;
 
@@ -260,6 +272,58 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
                       </span>
                       {bill.description}
                     </p>
+                    <div style={{ display: "flex", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
+                      {bill.analysisUrl && (
+                        <a
+                          href={bill.analysisUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: spacing.xs,
+                            padding: `2px ${spacing.sm}`,
+                            borderRadius: spacing.radius.sm,
+                            backgroundColor: colors.primary[600],
+                            color: colors.white,
+                            fontSize: typography.fontSize.xs,
+                            fontWeight: typography.fontWeight.medium,
+                            textDecoration: "none",
+                          }}
+                        >
+                          View Analysis
+                        </a>
+                      )}
+                      {bill.reformConfig && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setActiveBill(bill);
+                          }}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            gap: spacing.xs,
+                            padding: `2px ${spacing.sm}`,
+                            border: `1px solid ${colors.primary[600]}`,
+                            borderRadius: spacing.radius.sm,
+                            backgroundColor: colors.white,
+                            color: colors.primary[600],
+                            fontSize: typography.fontSize.xs,
+                            fontWeight: typography.fontWeight.medium,
+                            cursor: "pointer",
+                            transition: "background-color 0.15s ease",
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.primary[50]}
+                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.white}
+                        >
+                          <CalculatorIcon />
+                          Analyze Impact
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <LinkIcon />
                 </a>
@@ -391,6 +455,16 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
           </div>
         </div>
       </div>
+
+      {/* Reform Analyzer Modal */}
+      {activeBill?.reformConfig && (
+        <ReformAnalyzer
+          reformConfig={activeBill.reformConfig}
+          stateAbbr={stateAbbr}
+          billUrl={activeBill.url}
+          onClose={() => setActiveBill(null)}
+        />
+      )}
     </div>
   );
 });

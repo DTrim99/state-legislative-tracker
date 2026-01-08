@@ -394,7 +394,12 @@ export const stateData = {
     },
     legislativeActivity: "high",
     activeBills: [
-      { bill: "S.2162 (Working Families Tax Credit)", status: "proposed", description: "New refundable credit for working families", url: "https://www.nysenate.gov/legislation/bills/2025/S2162" }
+      {
+        bill: "S.2082 (Working Families Tax Credit)",
+        status: "proposed",
+        description: "New refundable credit for working families",
+        url: "https://www.nysenate.gov/legislation/bills/2025/S2082"
+      }
     ],
   },
   NC: {
@@ -498,7 +503,12 @@ export const stateData = {
     },
     legislativeActivity: "high",
     activeBills: [
-      { bill: "H.4216", status: "proposed", description: "Flat 3.99% tax proposal", url: "https://www.scstatehouse.gov/billsearch.php?billnumbers=4216&session=126" }
+      {
+        bill: "H.4216",
+        status: "proposed",
+        description: "Flat 3.99% tax proposal",
+        url: "https://www.scstatehouse.gov/billsearch.php?billnumbers=4216&session=126"
+      }
     ],
   },
   SD: {
@@ -542,12 +552,29 @@ export const stateData = {
     abbr: "UT",
     session: { status: "active", dates: "Jan 20 - Mar 6, 2026", carryover: false },
     policyLevers: {
-      incomeTax: { available: true, type: "flat", topRate: "4.65%" },
+      incomeTax: { available: true, type: "flat", topRate: "4.5%" },
       stateEITC: { available: true, match: "15%" },
       stateCTC: { available: false },
     },
-    legislativeActivity: "moderate",
-    activeBills: [],
+    legislativeActivity: "high",
+    activeBills: [
+      {
+        bill: "SB0060",
+        status: "proposed",
+        description: "Cut income tax rate from 4.5% to 4.45%",
+        url: "https://le.utah.gov/~2026/bills/static/SB0060.html",
+        reformConfig: {
+          id: "ut-sb0060-rate-cut",
+          label: "Utah Income Tax Rate Cut (SB0060)",
+          description: "Reduces Utah's flat income tax rate from 4.5% to 4.45%",
+          reform: {
+            "gov.states.ut.tax.income.rate": {
+              "2026": 0.0445
+            }
+          }
+        }
+      }
+    ],
   },
   VT: {
     name: "Vermont",
@@ -582,8 +609,15 @@ export const stateData = {
       stateEITC: { available: true, name: "Working Families Tax Credit", type: "custom" },
       stateCTC: { available: false },
     },
-    legislativeActivity: "moderate",
-    activeBills: [],
+    legislativeActivity: "high",
+    activeBills: [
+      {
+        bill: "Millionaires' Tax Proposal",
+        status: "proposed",
+        description: "9.9% income tax on earnings over $1M",
+        url: "https://governor.wa.gov/news/2025/governor-ferguson-announces-support-millionaires-tax"
+      }
+    ],
   },
   WV: {
     name: "West Virginia",

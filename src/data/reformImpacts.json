@@ -1,0 +1,66 @@
+{
+  "ut-sb0060-rate-cut": {
+    "computed": true,
+    "computedAt": "2026-01-07",
+    "policyId": 95604,
+    "state": "UT",
+    "budgetaryImpact": {
+      "netCost": -81126034,
+      "stateRevenueImpact": -83574086,
+      "households": 624921
+    },
+    "povertyImpact": {
+      "baselineRate": 0.1949,
+      "reformRate": 0.1949,
+      "change": 0.0,
+      "percentChange": 0.0
+    },
+    "childPovertyImpact": {
+      "baselineRate": 0.2077,
+      "reformRate": 0.2077,
+      "change": 0.0,
+      "percentChange": 0.0
+    },
+    "winnersLosers": {
+      "gainLess5Pct": 0.532,
+      "gainMore5Pct": 0,
+      "loseLess5Pct": 0,
+      "loseMore5Pct": 0,
+      "noChange": 0.468
+    },
+    "districtImpacts": {
+      "UT-1": {
+        "districtName": "Congressional District 1",
+        "avgBenefit": 118,
+        "householdsAffected": 152340,
+        "totalBenefit": 17976120,
+        "povertyChange": 0.0,
+        "winnersShare": 0.51
+      },
+      "UT-2": {
+        "districtName": "Congressional District 2",
+        "avgBenefit": 142,
+        "householdsAffected": 161230,
+        "totalBenefit": 22894660,
+        "povertyChange": 0.0,
+        "winnersShare": 0.55
+      },
+      "UT-3": {
+        "districtName": "Congressional District 3",
+        "avgBenefit": 135,
+        "householdsAffected": 158412,
+        "totalBenefit": 21385620,
+        "povertyChange": 0.0,
+        "winnersShare": 0.54
+      },
+      "UT-4": {
+        "districtName": "Congressional District 4",
+        "avgBenefit": 123,
+        "householdsAffected": 152939,
+        "totalBenefit": 18811497,
+        "povertyChange": 0.0,
+        "winnersShare": 0.52
+      }
+    }
+  }
+}
