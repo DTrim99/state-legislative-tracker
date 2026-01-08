@@ -33,6 +33,40 @@ const UserIcon = () => (
   </svg>
 );
 
+const Spinner = () => (
+  <svg
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    style={{
+      animation: "spin 1s linear infinite",
+    }}
+  >
+    <circle
+      cx="12"
+      cy="12"
+      r="10"
+      stroke={colors.gray[200]}
+      strokeWidth="3"
+      fill="none"
+    />
+    <path
+      d="M12 2a10 10 0 0 1 10 10"
+      stroke={colors.primary[600]}
+      strokeWidth="3"
+      strokeLinecap="round"
+      fill="none"
+    />
+    <style>{`
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+    `}</style>
+  </svg>
+);
+
 const TABS = [
   { id: "statewide", label: "Statewide", icon: ChartIcon },
   { id: "districts", label: "Districts", icon: MapIcon },
@@ -265,7 +299,31 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClo
                 }}>
                   Your Impact
                 </h3>
-                {hasCalculated ? (
+                {loading ? (
+                  <div style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: spacing["2xl"],
+                    backgroundColor: colors.background.secondary,
+                    borderRadius: spacing.radius.xl,
+                    border: `1px solid ${colors.border.light}`,
+                    height: "100%",
+                    minHeight: "200px",
+                    gap: spacing.md,
+                  }}>
+                    <Spinner />
+                    <p style={{
+                      margin: 0,
+                      color: colors.text.secondary,
+                      fontSize: typography.fontSize.sm,
+                      fontFamily: typography.fontFamily.body,
+                    }}>
+                      Calculating your impact...
+                    </p>
+                  </div>
+                ) : hasCalculated ? (
                   <ResultsDisplay
                     baseline={results?.baseline}
                     reform={results?.reform}

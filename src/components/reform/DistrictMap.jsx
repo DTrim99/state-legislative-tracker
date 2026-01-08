@@ -115,7 +115,6 @@ function getImpactHoverColor(avgBenefit, maxBenefit) {
 }
 
 function UtahDistrictMap({ reformId }) {
-  const [hoveredDistrict, setHoveredDistrict] = useState(null);
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const reformImpacts = reformImpactsData[reformId];
   const hasDistrictData = reformImpacts?.districtImpacts;
@@ -127,7 +126,7 @@ function UtahDistrictMap({ reformId }) {
       ))
     : 150;
 
-  const activeDistrict = selectedDistrict || hoveredDistrict;
+  const activeDistrict = selectedDistrict;
   const activeImpact = activeDistrict && hasDistrictData
     ? reformImpacts.districtImpacts[`UT-${activeDistrict}`]
     : null;
@@ -191,10 +190,9 @@ function UtahDistrictMap({ reformId }) {
                 ? reformImpacts.districtImpacts[`UT-${districtId}`]
                 : null;
               const avgBenefit = impact?.avgBenefit || 0;
-              const isHovered = hoveredDistrict === districtId;
               const isSelected = selectedDistrict === districtId;
 
-              const fillColor = isHovered || isSelected
+              const fillColor = isSelected
                 ? getImpactHoverColor(avgBenefit, maxBenefit)
                 : getImpactColor(avgBenefit, maxBenefit);
 
@@ -209,8 +207,6 @@ function UtahDistrictMap({ reformId }) {
                       cursor: "pointer",
                       transition: "fill 0.2s ease, stroke-width 0.2s ease",
                     }}
-                    onMouseEnter={() => setHoveredDistrict(districtId)}
-                    onMouseLeave={() => setHoveredDistrict(null)}
                     onClick={() => setSelectedDistrict(selectedDistrict === districtId ? null : districtId)}
                   />
                   {/* District label */}
@@ -330,7 +326,7 @@ function UtahDistrictMap({ reformId }) {
               fontFamily: typography.fontFamily.body,
               textAlign: "center",
             }}>
-              Click or hover over a district<br />to see detailed impact data
+              Click on a district<br />to see detailed impact data
             </p>
           </div>
         )}
