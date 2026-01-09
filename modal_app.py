@@ -36,7 +36,7 @@ image = (
     image=image,
     allow_concurrent_inputs=100,
 )
-@modal.asgi_app()
+@modal.asgi_app(label="state-legislative-tracker")
 def web():
     """Serve static files with FastAPI."""
     from fastapi import FastAPI
