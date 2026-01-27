@@ -1,16 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   ComposableMap,
   Geographies,
   Geography,
   ZoomableGroup,
+  Annotation,
+  Marker,
 } from "react-simple-maps";
+import { geoCentroid } from "d3-geo";
 import { colors, typography, spacing } from "../../designTokens";
 import reformImpactsData from "../../data/reformImpacts.json";
 
 // ArcGIS REST API for 118th Congressional Districts
 const getCongressionalDistrictsUrl = (stateAbbr) =>
-  `https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_118th_Congressional_Districts/FeatureServer/0/query?where=STATE_ABBR='${stateAbbr}'&outFields=*&f=geojson`;
+  `https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_118th_Congressional_Districts/FeatureServer/0/query?where=${encodeURIComponent(`STATE_ABBR='${stateAbbr}'`)}&outFields=*&f=geojson`;
 
 // State FIPS codes for filtering
 const STATE_FIPS = {
@@ -748,7 +751,76 @@ const STATE_ZOOMS = {
   "ID": 3, "WA": 3, "HI": 3,
 };
 
+// District details panel for generic map
+function DistrictDetails({ impact }) {
+  const avgBenefit = impact?.avgBenefit || 0;
+  const isPositive = avgBenefit > 0;
+  const isNeutral = avgBenefit === 0;
+
+  return (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: spacing.lg }}>
+      {/* Impact Value */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        gap: spacing.sm,
+      }}>
+        <span style={{
+          color: isNeutral ? colors.gray[500] : (isPositive ? colors.primary[600] : colors.red[600]),
+        }}>
+          {isNeutral ? null : (isPositive ? <ArrowUpIcon /> : <ArrowDownIcon />)}
+        </span>
+        <span style={{
+          fontSize: typography.fontSize["3xl"],
+          fontWeight: typography.fontWeight.bold,
+          fontFamily: typography.fontFamily.primary,
+          color: isNeutral ? colors.gray[600] : (isPositive ? colors.primary[700] : colors.red[700]),
+        }}>
+          {isPositive ? "+" : ""}{avgBenefit === 0 ? "$0" : `$${Math.abs(avgBenefit).toLocaleString()}`}
+        </span>
+        <span style={{
+          fontSize: typography.fontSize.base,
+          fontFamily: typography.fontFamily.body,
+          color: colors.text.tertiary,
+        }}>
+          /household avg
+        </span>
+      </div>
+
+      {/* Stats Grid */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "1fr 1fr",
+        gap: spacing.md,
+      }}>
+        <StatBox
+          label="Households"
+          value={impact.householdsAffected?.toLocaleString() || "—"}
+        />
+        <StatBox
+          label="Winners"
+          value={impact.winnersShare ? `${(impact.winnersShare * 100).toFixed(0)}%` : "—"}
+          color={colors.primary[600]}
+        />
+        <StatBox
+          label="Total Benefit"
+          value={impact.totalBenefit ? `$${(impact.totalBenefit / 1_000_000).toFixed(1)}M` : "—"}
+          color={isPositive ? colors.primary[600] : colors.gray[500]}
+        />
+        <StatBox
+          label="Poverty Δ"
+          value={impact.povertyChange === 0
+            ? "None"
+            : `${impact.povertyChange > 0 ? "+" : ""}${(impact.povertyChange * 100).toFixed(2)}pp`}
+          color={impact.povertyChange < 0 ? colors.primary[600] : (impact.povertyChange > 0 ? colors.red[600] : colors.gray[500])}
+        />
+      </div>
+    </div>
+  );
+}
+
 // Generic state district map using react-simple-maps with ArcGIS GeoJSON
+// Matches Utah map styling with district labels and same color scheme
 function GenericStateDistrictMap({ stateAbbr, reformId }) {
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [geoData, setGeoData] = useState(null);
@@ -758,27 +830,62 @@ function GenericStateDistrictMap({ stateAbbr, reformId }) {
   const hasDistrictData = reformImpacts?.districtImpacts;
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
-    fetch(getCongressionalDistrictsUrl(stateAbbr))
-      .then(res => {
+    let cancelled = false;
+
+    const fetchDistricts = async () => {
+      try {
+        const res = await fetch(getCongressionalDistrictsUrl(stateAbbr));
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then(data => {
+        const data = await res.json();
+
+        if (cancelled) return;
+
         if (data.features && data.features.length > 0) {
           setGeoData(data);
+          setError(null);
         } else {
+          setGeoData(null);
           setError("No districts found");
         }
         setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
+        if (cancelled) return;
         console.error("Failed to load congressional districts:", err);
+        setGeoData(null);
         setError(err.message);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchDistricts();
+
+    return () => { cancelled = true; };
   }, [stateAbbr]);
+
+  // Calculate centroids for district labels
+  const districtCentroids = useMemo(() => {
+    if (!geoData) return {};
+    const centroids = {};
+    geoData.features.forEach(feature => {
+      const props = feature.properties;
+      // ArcGIS uses CDFIPS for district number (e.g., "01", "02")
+      const districtFp = props.CDFIPS || props.CD118FP || props.CDFP;
+      const districtNum = parseInt(districtFp, 10);
+      const districtId = `${stateAbbr}-${districtNum || 1}`;
+      const centroid = geoCentroid(feature);
+      centroids[districtId] = {
+        coords: centroid,
+        num: districtNum === 0 ? "AL" : districtNum,
+      };
+    });
+    return centroids;
+  }, [geoData, stateAbbr]);
+
+  // Calculate max benefit for color scaling
+  const maxBenefit = useMemo(() => {
+    if (!hasDistrictData) return 100;
+    return Math.max(...Object.values(reformImpacts.districtImpacts).map(d => Math.abs(d?.avgBenefit || 0)), 1);
+  }, [hasDistrictData, reformImpacts]);
 
   if (loading) {
     return (
@@ -798,49 +905,23 @@ function GenericStateDistrictMap({ stateAbbr, reformId }) {
     return <CardBasedDistrictView stateAbbr={stateAbbr} reformId={reformId} />;
   }
 
-  // Calculate max benefit for color scaling
-  const maxBenefit = hasDistrictData
-    ? Math.max(...Object.values(reformImpacts.districtImpacts).map(d => Math.abs(d?.avgBenefit || 0)), 1)
-    : 100;
-
-  const getDistrictColor = (districtId) => {
-    if (!hasDistrictData) return colors.gray[200];
-    const impact = reformImpacts.districtImpacts[districtId];
-    if (!impact) return colors.gray[200];
-
-    const avgBenefit = impact.avgBenefit || 0;
-    if (avgBenefit === 0) return colors.gray[300];
-
-    const intensity = Math.min(Math.abs(avgBenefit) / maxBenefit, 1);
-    if (avgBenefit > 0) {
-      // Green gradient for positive
-      const r = Math.round(34 + (1 - intensity) * 180);
-      const g = Math.round(139 + (1 - intensity) * 80);
-      const b = Math.round(34 + (1 - intensity) * 180);
-      return `rgb(${r}, ${g}, ${b})`;
-    } else {
-      // Red gradient for negative
-      const r = Math.round(220 - (1 - intensity) * 100);
-      const g = Math.round(53 + (1 - intensity) * 150);
-      const b = Math.round(69 + (1 - intensity) * 150);
-      return `rgb(${r}, ${g}, ${b})`;
-    }
-  };
-
   // Parse district number from ArcGIS GeoJSON properties
   const getDistrictInfo = (geo) => {
     const props = geo.properties;
     if (!props) return null;
-
-    // ArcGIS uses CD118FP for district number (01, 02, etc. or 00 for at-large)
-    const districtFp = props.CD118FP || props.CDFP;
+    // ArcGIS uses CDFIPS for district number (e.g., "01", "02")
+    const districtFp = props.CDFIPS || props.CD118FP || props.CDFP;
     const districtNum = parseInt(districtFp, 10);
-
     return {
       districtId: `${stateAbbr}-${districtNum || 1}`,
       districtNum: districtNum === 0 ? "AL" : districtNum,
-      name: props.NAMELSAD || `District ${districtNum}`,
+      name: props.NAMELSAD || props.NAME || `District ${districtNum}`,
     };
+  };
+
+  const getAvgBenefit = (districtId) => {
+    if (!hasDistrictData) return 0;
+    return reformImpacts.districtImpacts[districtId]?.avgBenefit || 0;
   };
 
   const activeDistrict = selectedDistrict;
@@ -851,139 +932,214 @@ function GenericStateDistrictMap({ stateAbbr, reformId }) {
   const center = STATE_CENTERS[stateAbbr] || [-97, 38];
   const zoom = STATE_ZOOMS[stateAbbr] || 3;
 
+  const stateName = {
+    "OK": "Oklahoma", "UT": "Utah", "CA": "California", "NY": "New York",
+    "TX": "Texas", "FL": "Florida", "GA": "Georgia", "NC": "North Carolina",
+    "PA": "Pennsylvania", "OH": "Ohio", "MI": "Michigan", "IL": "Illinois",
+  }[stateAbbr] || stateAbbr;
+
   return (
-    <div style={{ display: "flex", gap: spacing.lg, height: "100%" }}>
-      {/* Map */}
-      <div style={{ flex: 2, minHeight: "350px" }}>
-        <ComposableMap
-          projection="geoMercator"
-          projectionConfig={{ scale: 800 }}
-          style={{ width: "100%", height: "100%" }}
-        >
-          <ZoomableGroup center={center} zoom={zoom}>
-            <Geographies geography={geoData}>
-              {({ geographies }) =>
-                geographies.map(geo => {
-                  const info = getDistrictInfo(geo);
-                  if (!info) return null;
+    <div style={{
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: spacing["2xl"],
+      height: "100%",
+    }}>
+      {/* Map Container */}
+      <div style={{
+        backgroundColor: colors.background.secondary,
+        borderRadius: spacing.radius.xl,
+        border: `1px solid ${colors.border.light}`,
+        padding: spacing.xl,
+        display: "flex",
+        flexDirection: "column",
+      }}>
+        <h4 style={{
+          margin: `0 0 ${spacing.md}`,
+          fontSize: typography.fontSize.sm,
+          fontWeight: typography.fontWeight.semibold,
+          fontFamily: typography.fontFamily.body,
+          color: colors.text.secondary,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}>
+          {stateName} Congressional Districts
+        </h4>
 
-                  const isSelected = selectedDistrict === info.districtId;
-                  const fillColor = getDistrictColor(info.districtId);
+        <div style={{
+          flex: 1,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          minHeight: "300px",
+        }}>
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{ scale: 800 }}
+            style={{ width: "100%", height: "100%", maxHeight: "350px" }}
+          >
+            <ZoomableGroup center={center} zoom={zoom}>
+              <Geographies geography={geoData}>
+                {({ geographies }) =>
+                  geographies.map(geo => {
+                    const info = getDistrictInfo(geo);
+                    if (!info) return null;
 
-                  return (
-                    <Geography
-                      key={geo.rsmKey || info.districtId}
-                      geography={geo}
-                      onClick={() => setSelectedDistrict(info.districtId)}
-                      style={{
-                        default: {
-                          fill: fillColor,
-                          stroke: isSelected ? colors.primary[700] : "#fff",
-                          strokeWidth: isSelected ? 1.5 : 0.3,
-                          outline: "none",
-                        },
-                        hover: {
-                          fill: fillColor,
-                          stroke: colors.primary[600],
-                          strokeWidth: 1,
-                          outline: "none",
-                          cursor: "pointer",
-                        },
-                        pressed: {
-                          fill: fillColor,
-                          stroke: colors.primary[700],
-                          strokeWidth: 1.5,
-                          outline: "none",
-                        },
-                      }}
-                    />
-                  );
-                })
-              }
-            </Geographies>
-          </ZoomableGroup>
-        </ComposableMap>
+                    const avgBenefit = getAvgBenefit(info.districtId);
+                    const isSelected = selectedDistrict === info.districtId;
+                    const fillColor = isSelected
+                      ? getImpactHoverColor(avgBenefit, maxBenefit)
+                      : getImpactColor(avgBenefit, maxBenefit);
+
+                    return (
+                      <Geography
+                        key={geo.rsmKey || info.districtId}
+                        geography={geo}
+                        onClick={() => setSelectedDistrict(
+                          selectedDistrict === info.districtId ? null : info.districtId
+                        )}
+                        style={{
+                          default: {
+                            fill: fillColor,
+                            stroke: isSelected ? colors.primary[700] : colors.white,
+                            strokeWidth: isSelected ? 1 : 0.5,
+                            outline: "none",
+                            cursor: "pointer",
+                            transition: "fill 0.2s ease",
+                          },
+                          hover: {
+                            fill: getImpactHoverColor(avgBenefit, maxBenefit),
+                            stroke: colors.primary[600],
+                            strokeWidth: 0.8,
+                            outline: "none",
+                            cursor: "pointer",
+                          },
+                          pressed: {
+                            fill: getImpactHoverColor(avgBenefit, maxBenefit),
+                            stroke: colors.primary[700],
+                            strokeWidth: 1,
+                            outline: "none",
+                          },
+                        }}
+                      />
+                    );
+                  })
+                }
+              </Geographies>
+              {/* District Labels */}
+              {Object.entries(districtCentroids).map(([districtId, data]) => (
+                <Marker key={districtId} coordinates={data.coords}>
+                  <text
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    style={{
+                      fill: colors.white,
+                      fontSize: "10px",
+                      fontWeight: "700",
+                      fontFamily: typography.fontFamily.primary,
+                      pointerEvents: "none",
+                      textShadow: "0 1px 2px rgba(0,0,0,0.5)",
+                    }}
+                  >
+                    {data.num}
+                  </text>
+                </Marker>
+              ))}
+            </ZoomableGroup>
+          </ComposableMap>
+        </div>
+
+        {/* Legend */}
+        <div style={{
+          display: "flex",
+          justifyContent: "center",
+          gap: spacing.lg,
+          marginTop: spacing.lg,
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "2px",
+              backgroundColor: colors.primary[400],
+            }} />
+            <span style={{
+              fontSize: typography.fontSize.xs,
+              fontFamily: typography.fontFamily.body,
+              color: colors.text.secondary,
+            }}>
+              Benefit
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "2px",
+              backgroundColor: colors.gray[200],
+            }} />
+            <span style={{
+              fontSize: typography.fontSize.xs,
+              fontFamily: typography.fontFamily.body,
+              color: colors.text.secondary,
+            }}>
+              No change
+            </span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: spacing.xs }}>
+            <div style={{
+              width: "12px",
+              height: "12px",
+              borderRadius: "2px",
+              backgroundColor: colors.red[400],
+            }} />
+            <span style={{
+              fontSize: typography.fontSize.xs,
+              fontFamily: typography.fontFamily.body,
+              color: colors.text.secondary,
+            }}>
+              Cost
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Info Panel */}
+      {/* District Details Panel */}
       <div style={{
-        flex: 1,
-        backgroundColor: colors.gray[50],
-        borderRadius: "8px",
-        padding: spacing.lg,
-        minWidth: "200px",
+        backgroundColor: colors.background.secondary,
+        borderRadius: spacing.radius.xl,
+        border: `1px solid ${colors.border.light}`,
+        padding: spacing.xl,
+        display: "flex",
+        flexDirection: "column",
       }}>
+        <h4 style={{
+          margin: `0 0 ${spacing.lg}`,
+          fontSize: typography.fontSize.sm,
+          fontWeight: typography.fontWeight.semibold,
+          fontFamily: typography.fontFamily.body,
+          color: colors.text.secondary,
+          textTransform: "uppercase",
+          letterSpacing: "0.5px",
+        }}>
+          {activeDistrict ? `District ${activeDistrict.split("-")[1]} Details` : "Select a District"}
+        </h4>
+
         {activeDistrict && activeImpact ? (
-          <>
-            <h4 style={{
-              margin: `0 0 ${spacing.md}`,
-              fontSize: typography.fontSize.lg,
-              fontWeight: typography.fontWeight.semibold,
-              fontFamily: typography.fontFamily.primary,
-              color: colors.secondary[900],
-            }}>
-              District {activeDistrict.split("-")[1]}
-            </h4>
-
-            <div style={{ marginBottom: spacing.md }}>
-              <div style={{
-                fontSize: typography.fontSize.sm,
-                color: colors.text.secondary,
-                marginBottom: spacing.xs,
-              }}>
-                Average Benefit
-              </div>
-              <div style={{
-                fontSize: typography.fontSize["2xl"],
-                fontWeight: typography.fontWeight.bold,
-                color: activeImpact.avgBenefit >= 0 ? colors.primary[600] : colors.red[600],
-              }}>
-                ${Math.round(activeImpact.avgBenefit).toLocaleString()}
-              </div>
-            </div>
-
-            <div style={{ marginBottom: spacing.md }}>
-              <div style={{
-                fontSize: typography.fontSize.sm,
-                color: colors.text.secondary,
-                marginBottom: spacing.xs,
-              }}>
-                Households Affected
-              </div>
-              <div style={{
-                fontSize: typography.fontSize.lg,
-                fontWeight: typography.fontWeight.semibold,
-                color: colors.secondary[900],
-              }}>
-                {Math.round(activeImpact.householdsAffected).toLocaleString()}
-              </div>
-            </div>
-
-            <div>
-              <div style={{
-                fontSize: typography.fontSize.sm,
-                color: colors.text.secondary,
-                marginBottom: spacing.xs,
-              }}>
-                Winners Share
-              </div>
-              <div style={{
-                fontSize: typography.fontSize.lg,
-                fontWeight: typography.fontWeight.semibold,
-                color: colors.secondary[900],
-              }}>
-                {(activeImpact.winnersShare * 100).toFixed(1)}%
-              </div>
-            </div>
-          </>
+          <DistrictDetails impact={activeImpact} />
         ) : (
           <div style={{
-            color: colors.text.secondary,
+            flex: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: colors.text.tertiary,
             fontSize: typography.fontSize.sm,
+            fontFamily: typography.fontFamily.body,
             textAlign: "center",
-            paddingTop: spacing.xl,
+            padding: spacing.xl,
           }}>
-            Click on a district to see impact details
+            Click on a district in the map to view detailed impact analysis
           </div>
         )}
       </div>
