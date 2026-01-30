@@ -22,6 +22,7 @@ try:
     from policyengine_us import Microsimulation
     from policyengine_core.reforms import Reform
     from policyengine_core.periods import instant
+    from microdf import MicroSeries
     import numpy as np
     HAS_POLICYENGINE = True
 except ImportError:
@@ -411,7 +412,7 @@ def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) ->
             # Winners share - match API's intra_decile_impact calculation exactly
             # API methodology:
             # 1. Calculate relative income change using capped values
-            # 2. Weight by people (household_count_people * household_weight)
+            # 2. Use MicroSeries with weights for proper weighted sums
             # 3. Calculate proportion of winners per decile
             # 4. Average across 10 deciles
             district_baseline = baseline_income[in_district]
@@ -421,8 +422,11 @@ def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) ->
             capped_reform = np.maximum(district_reform, 1) + absolute_change
             relative_change = (capped_reform - capped_baseline) / capped_baseline
 
-            # Get people weights and deciles for this district
-            district_people = household_count_people[in_district] * district_weights
+            # Create MicroSeries with weights (matching API pattern)
+            district_people = MicroSeries(
+                household_count_people[in_district],
+                weights=district_weights
+            )
             district_decile = household_income_decile[in_district]
 
             # API threshold: > 0.001 (0.1%) = winner
@@ -435,8 +439,8 @@ def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) ->
                 if not np.any(in_decile):
                     decile_proportions.append(0.0)
                     continue
-                people_in_decile = float(np.sum(district_people[in_decile]))
-                winners_in_decile = float(np.sum(district_people[in_decile & is_winner]))
+                people_in_decile = float(district_people[in_decile].sum())
+                winners_in_decile = float(district_people[in_decile & is_winner].sum())
                 proportion = winners_in_decile / people_in_decile if people_in_decile > 0 else 0.0
                 decile_proportions.append(proportion)
 
