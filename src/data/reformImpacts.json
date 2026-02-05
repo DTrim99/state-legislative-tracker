@@ -358,5 +358,185 @@
         "winnersShare": 0.19
       }
     }
+  },
+  "ut-hb290-ctc-threshold-increase": {
+    "computed": true,
+    "computedAt": "2026-02-05 17:05:52",
+    "budgetaryImpact": {
+      "netCost": -5989084.2637786865,
+      "stateRevenueImpact": -5989084.210521698,
+      "households": 1058819.8890196688
+    },
+    "povertyImpact": {
+      "baselineRate": 0.15417477502225185,
+      "reformRate": 0.15417477502225185,
+      "change": 0.0,
+      "percentChange": 0.0
+    },
+    "childPovertyImpact": {
+      "baselineRate": 0.13882100218112534,
+      "reformRate": 0.13882100218112534,
+      "change": 0.0,
+      "percentChange": 0.0
+    },
+    "winnersLosers": {
+      "gainMore5Pct": 0.0,
+      "gainLess5Pct": 0.016210404052478703,
+      "loseLess5Pct": 0.0,
+      "loseMore5Pct": 0.0,
+      "noChange": 0.9837895959475214
+    },
+    "decileImpact": {
+      "relative": {
+        "1": 0.07492825336920451,
+        "2": 11.299536423598909,
+        "3": 21.332615377397545,
+        "4": 6.140473713042658,
+        "5": 3.1273055911474357,
+        "6": 6.349240569641304,
+        "7": 1.5343536532112048,
+        "8": 0.04629630363281766,
+        "9": 1.6903359122217934,
+        "10": 0.7116921304222243
+      }
+    },
+    "inequality": {
+      "giniBaseline": 0.45047510711193267,
+      "giniReform": 0.45043521837384815
+    },
+    "policyId": 95872,
+    "state": "UT",
+    "districtImpacts": {
+      "UT-1": {
+        "districtName": "Congressional District 1",
+        "avgBenefit": 6.0,
+        "householdsAffected": 268102.0,
+        "totalBenefit": 1481357.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.02
+      },
+      "UT-2": {
+        "districtName": "Congressional District 2",
+        "avgBenefit": 5.0,
+        "householdsAffected": 278169.0,
+        "totalBenefit": 1434857.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.01
+      },
+      "UT-3": {
+        "districtName": "Congressional District 3",
+        "avgBenefit": 5.0,
+        "householdsAffected": 256259.0,
+        "totalBenefit": 1219325.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.01
+      },
+      "UT-4": {
+        "districtName": "Congressional District 4",
+        "avgBenefit": 7.0,
+        "householdsAffected": 256290.0,
+        "totalBenefit": 1853555.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.02
+      }
+    }
+  },
+  "or-sb1507-eitc-increase": {
+    "computed": true,
+    "computedAt": "2026-02-05 17:08:03",
+    "budgetaryImpact": {
+      "netCost": -27450132.50705719,
+      "stateRevenueImpact": -27450152.279201508,
+      "households": 1583246.5917273192
+    },
+    "povertyImpact": {
+      "baselineRate": 0.26082041474163536,
+      "reformRate": 0.26022077143509553,
+      "change": -0.0005996433065398321,
+      "percentChange": -0.22990658424258295
+    },
+    "childPovertyImpact": {
+      "baselineRate": 0.25234597323582647,
+      "reformRate": 0.25091692695967016,
+      "change": -0.0014290462761563094,
+      "percentChange": -0.5663043708729261
+    },
+    "winnersLosers": {
+      "gainMore5Pct": 0.0002497762368724509,
+      "gainLess5Pct": 0.13293051198146924,
+      "loseLess5Pct": 0.0,
+      "loseMore5Pct": 0.0,
+      "noChange": 0.8668197117816584
+    },
+    "decileImpact": {
+      "relative": {
+        "1": 10.19071517323984,
+        "2": 28.548321769014237,
+        "3": 30.912131746372886,
+        "4": 31.717857775384708,
+        "5": 15.83809216056686,
+        "6": 17.568270063345697,
+        "7": 8.133480261547724,
+        "8": 5.706554496202306,
+        "9": 9.551899163991536,
+        "10": 2.941524272159234
+      }
+    },
+    "inequality": {
+      "giniBaseline": 0.4714914158921176,
+      "giniReform": 0.4713364840056079
+    },
+    "policyId": 95873,
+    "state": "OR",
+    "districtImpacts": {
+      "OR-1": {
+        "districtName": "Congressional District 1",
+        "avgBenefit": 12.0,
+        "householdsAffected": 258718.0,
+        "totalBenefit": 3148324.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.1
+      },
+      "OR-2": {
+        "districtName": "Congressional District 2",
+        "avgBenefit": 24.0,
+        "householdsAffected": 280486.0,
+        "totalBenefit": 6830816.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.18
+      },
+      "OR-3": {
+        "districtName": "Congressional District 3",
+        "avgBenefit": 17.0,
+        "householdsAffected": 255186.0,
+        "totalBenefit": 4403908.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.14
+      },
+      "OR-4": {
+        "districtName": "Congressional District 4",
+        "avgBenefit": 18.0,
+        "householdsAffected": 275047.0,
+        "totalBenefit": 5075089.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.14
+      },
+      "OR-5": {
+        "districtName": "Congressional District 5",
+        "avgBenefit": 15.0,
+        "householdsAffected": 255901.0,
+        "totalBenefit": 3831052.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.11
+      },
+      "OR-6": {
+        "districtName": "Congressional District 6",
+        "avgBenefit": 16.0,
+        "householdsAffected": 257909.0,
+        "totalBenefit": 4161053.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.13
+      }
+    }
   }
 }

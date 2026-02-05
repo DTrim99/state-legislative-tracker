@@ -483,8 +483,28 @@ export const stateData = {
       stateEITC: { available: true, match: "12%" },
       stateCTC: { available: false },
     },
-    legislativeActivity: "moderate",
-    activeBills: [],
+    legislativeActivity: "high",
+    activeBills: [
+      {
+        bill: "SB1507",
+        status: "Proposed",
+        description: "Raises EITC match rate to 17% for families with young children (from 12%) and 14% for others (from 9%)",
+        url: "https://olis.oregonlegislature.gov/liz/2026R1/Measures/Overview/SB1507",
+        reformConfig: {
+          id: "or-sb1507-eitc-increase",
+          label: "Oregon SB1507: EITC Match Rate Increase",
+          description: "Increases Oregon's EITC match from 12% to 17% for families with young children and from 9% to 14% for others",
+          reform: {
+            "gov.states.or.tax.income.credits.eitc.match.has_young_child": {
+              "2026-01-01.2100-12-31": 0.17
+            },
+            "gov.states.or.tax.income.credits.eitc.match.no_young_child": {
+              "2026-01-01.2100-12-31": 0.14
+            }
+          }
+        }
+      }
+    ],
   },
   PA: {
     name: "Pennsylvania",
@@ -654,6 +674,34 @@ export const stateData = {
             },
             "gov.states.ut.tax.income.credits.ss_benefits.phase_out.threshold.SINGLE": {
               "2026-01-01.2100-12-31": 45000.0
+            }
+          }
+        }
+      },
+      {
+        bill: "HB290",
+        status: "Proposed",
+        description: "Raises CTC phaseout thresholds: Single/HOH to $49k, Joint to $61k, MFS to $30.5k",
+        url: "https://le.utah.gov/~2026/bills/static/HB0290.html",
+        reformConfig: {
+          id: "ut-hb290-ctc-threshold-increase",
+          label: "Utah HB290: CTC Phaseout Threshold Increase",
+          description: "Raises the income thresholds at which Utah's Child Tax Credit begins to phase out",
+          reform: {
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.SINGLE": {
+              "2026-01-01.2100-12-31": 49000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.HEAD_OF_HOUSEHOLD": {
+              "2026-01-01.2100-12-31": 49000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.JOINT": {
+              "2026-01-01.2100-12-31": 61000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.SURVIVING_SPOUSE": {
+              "2026-01-01.2100-12-31": 61000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.SEPARATE": {
+              "2026-01-01.2100-12-31": 30500.0
             }
           }
         }

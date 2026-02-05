@@ -62,6 +62,14 @@ CONGRESSIONAL_DISTRICTS = {
         3: "Congressional District 3",
         4: "Congressional District 4",
         5: "Congressional District 5",
+    },
+    "OR": {
+        1: "Congressional District 1",
+        2: "Congressional District 2",
+        3: "Congressional District 3",
+        4: "Congressional District 4",
+        5: "Congressional District 5",
+        6: "Congressional District 6",
     }
 }
 
@@ -137,6 +145,41 @@ REFORMS = [
         "reform": {
             "gov.states.ok.tax.income.credits.earned_income.eitc_fraction": {
                 "2026-01-01.2100-12-31": 0.10
+            }
+        }
+    },
+    {
+        "id": "ut-hb290-ctc-threshold-increase",
+        "state": "ut",
+        "label": "Utah HB290: CTC Phaseout Threshold Increase",
+        "reform": {
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.SINGLE": {
+                "2026-01-01.2100-12-31": 49000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.HEAD_OF_HOUSEHOLD": {
+                "2026-01-01.2100-12-31": 49000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.JOINT": {
+                "2026-01-01.2100-12-31": 61000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.SURVIVING_SPOUSE": {
+                "2026-01-01.2100-12-31": 61000.0
+            },
+            "gov.states.ut.tax.income.credits.ctc.reduction.start.SEPARATE": {
+                "2026-01-01.2100-12-31": 30500.0
+            }
+        }
+    },
+    {
+        "id": "or-sb1507-eitc-increase",
+        "state": "or",
+        "label": "Oregon SB1507: EITC Match Rate Increase",
+        "reform": {
+            "gov.states.or.tax.income.credits.eitc.match.has_young_child": {
+                "2026-01-01.2100-12-31": 0.17
+            },
+            "gov.states.or.tax.income.credits.eitc.match.no_young_child": {
+                "2026-01-01.2100-12-31": 0.14
             }
         }
     }
@@ -307,7 +350,7 @@ def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) ->
 
     # Get state FIPS code for filtering
     STATE_FIPS = {
-        "UT": 49, "CA": 6, "NY": 36, "TX": 48, "FL": 12, "SC": 45, "OK": 40,
+        "UT": 49, "CA": 6, "NY": 36, "TX": 48, "FL": 12, "SC": 45, "OK": 40, "OR": 41,
         # Add more as needed
     }
 
