@@ -462,7 +462,7 @@ export const stateData = {
         description: "Double state EITC from 5% to 10% of federal credit",
         url: "https://www.billtrack50.com/billdetail/1788567",
         reformConfig: {
-          id: "ok-hb2229-eitc",
+          id: "ok-hb2229",
           label: "Oklahoma HB2229: Double State EITC",
           description: "Increases Oklahoma's EITC match from 5% to 10% of the federal credit",
           reform: {
@@ -533,7 +533,7 @@ export const stateData = {
         description: "Makes 25% of the excess of the state's nonrefundable EITC refundable",
         url: "https://www.scstatehouse.gov/sess126_2025-2026/prever/3492_20241205.htm",
         reformConfig: {
-          id: "sc-h3492-refundable-eitc",
+          id: "sc-h3492",
           label: "SC H.3492 Partially Refundable EITC",
           description: "Makes 25% of the excess of South Carolina's nonrefundable EITC refundable",
           reform: {
@@ -599,7 +599,7 @@ export const stateData = {
         url: "https://le.utah.gov/~2026/bills/static/SB60.html",
         analysisUrl: "https://www.policyengine.org/us/research/utah-sb60-income-tax-reduction",
         reformConfig: {
-          id: "ut-sb60-rate-cut",
+          id: "ut-sb60",
           label: "Utah Income Tax Rate Cut (SB60)",
           description: "Reduces Utah's flat income tax rate from 4.5% to 4.45%",
           reform: {
@@ -615,7 +615,7 @@ export const stateData = {
         description: "Removes marriage penalties from income tax credits by setting single/HOH/MFS phaseouts to half of joint filer amounts; repeals state EITC",
         url: "https://le.utah.gov/~2026/bills/static/HB0210.html",
         reformConfig: {
-          id: "ut-hb210-marriage-penalty-removal",
+          id: "ut-hb210",
           label: "Utah HB210 Marriage Penalty Removal",
           description: "Removes marriage penalties from certain individual income tax credits and exemptions, increases taxpayer credit for married filers, and repeals the state EITC",
           reform: {
