@@ -729,8 +729,41 @@ export const stateData = {
       stateEITC: { available: true, match: "20%" },
       stateCTC: { available: false },
     },
-    legislativeActivity: "moderate",
-    activeBills: [],
+    legislativeActivity: "high",
+    activeBills: [
+      {
+        bill: "HB979",
+        status: "Proposed",
+        description: "Income tax reform: adds 8% bracket ($600k-$1M), 10% bracket ($1M+), increases standard deduction",
+        url: "https://lis.virginia.gov/bill-details/20261/HB979",
+        reformConfig: {
+          id: "va-hb979-income-tax-reform",
+          label: "Virginia HB979: Income Tax Reform",
+          description: "Adds two new high-income tax brackets (8% on $600k-$1M, 10% on $1M+) and increases standard deductions ($10k single, $15k HOH, $20k joint)",
+          year: 2027,
+          reform: {
+            "gov.contrib.states.va.hb979.in_effect": {
+              "2027-01-01.2100-12-31": true
+            },
+            "gov.states.va.tax.income.deductions.standard.SINGLE": {
+              "2027-01-01.2100-12-31": 10000
+            },
+            "gov.states.va.tax.income.deductions.standard.SEPARATE": {
+              "2027-01-01.2100-12-31": 10000
+            },
+            "gov.states.va.tax.income.deductions.standard.SURVIVING_SPOUSE": {
+              "2027-01-01.2100-12-31": 10000
+            },
+            "gov.states.va.tax.income.deductions.standard.HEAD_OF_HOUSEHOLD": {
+              "2027-01-01.2100-12-31": 15000
+            },
+            "gov.states.va.tax.income.deductions.standard.JOINT": {
+              "2027-01-01.2100-12-31": 20000
+            }
+          }
+        }
+      }
+    ],
   },
   WA: {
     name: "Washington",

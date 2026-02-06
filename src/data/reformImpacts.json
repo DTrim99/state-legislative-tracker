@@ -67,7 +67,7 @@
         "districtName": "Congressional District 3",
         "avgBenefit": 75.0,
         "householdsAffected": 256259.0,
-        "totalBenefit": 19270816.0,
+        "totalBenefit": 19270814.0,
         "povertyChange": 0.0,
         "winnersShare": 0.45
       },
@@ -133,7 +133,7 @@
         "districtName": "Congressional District 1",
         "avgBenefit": 12.0,
         "householdsAffected": 268102.0,
-        "totalBenefit": 3122778.0,
+        "totalBenefit": 3101253.0,
         "povertyChange": 0.0,
         "winnersShare": 0.32
       },
@@ -141,7 +141,7 @@
         "districtName": "Congressional District 2",
         "avgBenefit": 8.0,
         "householdsAffected": 278169.0,
-        "totalBenefit": 2277254.0,
+        "totalBenefit": 2258962.0,
         "povertyChange": 0.0,
         "winnersShare": 0.3
       },
@@ -149,7 +149,7 @@
         "districtName": "Congressional District 3",
         "avgBenefit": 11.0,
         "householdsAffected": 256259.0,
-        "totalBenefit": 2940792.0,
+        "totalBenefit": 2920915.0,
         "povertyChange": 0.0,
         "winnersShare": 0.31
       },
@@ -157,7 +157,7 @@
         "districtName": "Congressional District 4",
         "avgBenefit": 7.0,
         "householdsAffected": 256290.0,
-        "totalBenefit": 1830190.0,
+        "totalBenefit": 1816712.0,
         "povertyChange": 0.0,
         "winnersShare": 0.31
       }
@@ -215,15 +215,15 @@
         "districtName": "Congressional District 1",
         "avgBenefit": 164.0,
         "householdsAffected": 271928.0,
-        "totalBenefit": 44583912.0,
+        "totalBenefit": 44588552.0,
         "povertyChange": 0.0,
-        "winnersShare": 0.23
+        "winnersShare": 0.24
       },
       "SC-2": {
         "districtName": "Congressional District 2",
         "avgBenefit": 201.0,
         "householdsAffected": 260648.0,
-        "totalBenefit": 52334960.0,
+        "totalBenefit": 52340976.0,
         "povertyChange": 0.0,
         "winnersShare": 0.24
       },
@@ -231,7 +231,7 @@
         "districtName": "Congressional District 3",
         "avgBenefit": 208.0,
         "householdsAffected": 268139.0,
-        "totalBenefit": 55743048.0,
+        "totalBenefit": 55750232.0,
         "povertyChange": 0.0,
         "winnersShare": 0.24
       },
@@ -239,7 +239,7 @@
         "districtName": "Congressional District 4",
         "avgBenefit": 198.0,
         "householdsAffected": 264588.0,
-        "totalBenefit": 52509816.0,
+        "totalBenefit": 52515264.0,
         "povertyChange": 0.0,
         "winnersShare": 0.25
       },
@@ -247,7 +247,7 @@
         "districtName": "Congressional District 5",
         "avgBenefit": 212.0,
         "householdsAffected": 268566.0,
-        "totalBenefit": 56818696.0,
+        "totalBenefit": 56825688.0,
         "povertyChange": 0.0,
         "winnersShare": 0.25
       },
@@ -255,7 +255,7 @@
         "districtName": "Congressional District 6",
         "avgBenefit": 263.0,
         "householdsAffected": 271827.0,
-        "totalBenefit": 71487400.0,
+        "totalBenefit": 71493656.0,
         "povertyChange": 0.0,
         "winnersShare": 0.28
       },
@@ -263,7 +263,7 @@
         "districtName": "Congressional District 7",
         "avgBenefit": 233.0,
         "householdsAffected": 291911.0,
-        "totalBenefit": 67959520.0,
+        "totalBenefit": 67966472.0,
         "povertyChange": 0.0,
         "winnersShare": 0.27
       }
@@ -339,7 +339,7 @@
         "householdsAffected": 272522.0,
         "totalBenefit": 7490746.0,
         "povertyChange": 0.0,
-        "winnersShare": 0.22
+        "winnersShare": 0.23
       },
       "OK-4": {
         "districtName": "Congressional District 4",
@@ -536,6 +536,145 @@
         "totalBenefit": 4161053.0,
         "povertyChange": 0.0,
         "winnersShare": 0.13
+      }
+    }
+  },
+  "va-hb979-income-tax-reform": {
+    "computed": true,
+    "computedAt": "2026-02-06 10:19:26",
+    "budgetaryImpact": {
+      "netCost": 2936503061.0481873,
+      "stateRevenueImpact": 2904599385.4326363,
+      "households": 3023760.3110907283
+    },
+    "povertyImpact": {
+      "baselineRate": 0.2186094920875951,
+      "reformRate": 0.21558457306680648,
+      "change": -0.003024919020788608,
+      "percentChange": -1.3837089103050233
+    },
+    "childPovertyImpact": {
+      "baselineRate": 0.20819592804315393,
+      "reformRate": 0.2047272571888311,
+      "change": -0.003468670854322814,
+      "percentChange": -1.666060852834664
+    },
+    "winnersLosers": {
+      "gainMore5Pct": 0.005119948770905686,
+      "gainLess5Pct": 0.6859499744955813,
+      "loseLess5Pct": 0.0641640060831886,
+      "loseMore5Pct": 0.016270152116604052,
+      "noChange": 0.2284959185337203
+    },
+    "decileImpact": {
+      "relative": {
+        "1": 135.9155428424187,
+        "2": 347.52159150383136,
+        "3": 423.06930589091024,
+        "4": 524.1736127240094,
+        "5": 566.717547214484,
+        "6": 652.0570905851991,
+        "7": 644.7688438428427,
+        "8": 644.3574916200565,
+        "9": 690.1069147083078,
+        "10": -18469.711520694535
+      }
+    },
+    "inequality": {
+      "giniBaseline": 0.49204098335941,
+      "giniReform": 0.4853131867811327
+    },
+    "policyId": 95881,
+    "state": "VA",
+    "year": 2027,
+    "districtImpacts": {
+      "VA-1": {
+        "districtName": "Congressional District 1",
+        "avgBenefit": -611.0,
+        "householdsAffected": 283438.0,
+        "totalBenefit": -173241728.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.69
+      },
+      "VA-2": {
+        "districtName": "Congressional District 2",
+        "avgBenefit": -407.0,
+        "householdsAffected": 268197.0,
+        "totalBenefit": -109156736.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.7
+      },
+      "VA-3": {
+        "districtName": "Congressional District 3",
+        "avgBenefit": -280.0,
+        "householdsAffected": 271410.0,
+        "totalBenefit": -76034824.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.72
+      },
+      "VA-4": {
+        "districtName": "Congressional District 4",
+        "avgBenefit": -541.0,
+        "householdsAffected": 289164.0,
+        "totalBenefit": -156335280.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.74
+      },
+      "VA-5": {
+        "districtName": "Congressional District 5",
+        "avgBenefit": -530.0,
+        "householdsAffected": 290620.0,
+        "totalBenefit": -153889792.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.71
+      },
+      "VA-6": {
+        "districtName": "Congressional District 6",
+        "avgBenefit": -519.0,
+        "householdsAffected": 277888.0,
+        "totalBenefit": -144230400.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.69
+      },
+      "VA-7": {
+        "districtName": "Congressional District 7",
+        "avgBenefit": -826.0,
+        "householdsAffected": 263976.0,
+        "totalBenefit": -218123536.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.7
+      },
+      "VA-8": {
+        "districtName": "Congressional District 8",
+        "avgBenefit": -2498.0,
+        "householdsAffected": 266112.0,
+        "totalBenefit": -664853504.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.69
+      },
+      "VA-9": {
+        "districtName": "Congressional District 9",
+        "avgBenefit": -124.0,
+        "householdsAffected": 293579.0,
+        "totalBenefit": -36526320.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.67
+      },
+      "VA-10": {
+        "districtName": "Congressional District 10",
+        "avgBenefit": -2361.0,
+        "householdsAffected": 256754.0,
+        "totalBenefit": -606225280.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.69
+      },
+      "VA-11": {
+        "districtName": "Congressional District 11",
+        "avgBenefit": -2274.0,
+        "householdsAffected": 262624.0,
+        "totalBenefit": -597201984.0,
+        "povertyChange": 0.0,
+        "winnersShare": 0.7
       }
     }
   }

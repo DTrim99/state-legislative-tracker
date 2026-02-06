@@ -70,6 +70,19 @@ CONGRESSIONAL_DISTRICTS = {
         4: "Congressional District 4",
         5: "Congressional District 5",
         6: "Congressional District 6",
+    },
+    "VA": {
+        1: "Congressional District 1",
+        2: "Congressional District 2",
+        3: "Congressional District 3",
+        4: "Congressional District 4",
+        5: "Congressional District 5",
+        6: "Congressional District 6",
+        7: "Congressional District 7",
+        8: "Congressional District 8",
+        9: "Congressional District 9",
+        10: "Congressional District 10",
+        11: "Congressional District 11",
     }
 }
 
@@ -180,6 +193,32 @@ REFORMS = [
             },
             "gov.states.or.tax.income.credits.eitc.match.no_young_child": {
                 "2026-01-01.2100-12-31": 0.14
+            }
+        }
+    },
+    {
+        "id": "va-hb979-income-tax-reform",
+        "state": "va",
+        "label": "Virginia HB979: Income Tax Reform",
+        "year": 2027,
+        "reform": {
+            "gov.contrib.states.va.hb979.in_effect": {
+                "2027-01-01.2100-12-31": True
+            },
+            "gov.states.va.tax.income.deductions.standard.SINGLE": {
+                "2027-01-01.2100-12-31": 10000
+            },
+            "gov.states.va.tax.income.deductions.standard.SEPARATE": {
+                "2027-01-01.2100-12-31": 10000
+            },
+            "gov.states.va.tax.income.deductions.standard.SURVIVING_SPOUSE": {
+                "2027-01-01.2100-12-31": 10000
+            },
+            "gov.states.va.tax.income.deductions.standard.HEAD_OF_HOUSEHOLD": {
+                "2027-01-01.2100-12-31": 15000
+            },
+            "gov.states.va.tax.income.deductions.standard.JOINT": {
+                "2027-01-01.2100-12-31": 20000
             }
         }
     }
@@ -350,7 +389,7 @@ def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) ->
 
     # Get state FIPS code for filtering
     STATE_FIPS = {
-        "UT": 49, "CA": 6, "NY": 36, "TX": 48, "FL": 12, "SC": 45, "OK": 40, "OR": 41,
+        "UT": 49, "CA": 6, "NY": 36, "TX": 48, "FL": 12, "SC": 45, "OK": 40, "OR": 41, "VA": 51,
         # Add more as needed
     }
 
@@ -528,9 +567,10 @@ def main():
     for reform_config in REFORMS:
         reform_id = reform_config["id"]
         state = reform_config["state"]
+        year = reform_config.get("year", 2026)
 
         print(f"\nProcessing: {reform_config['label']}")
-        print(f"  State: {state.upper()}")
+        print(f"  State: {state.upper()}, Year: {year}")
 
         # Districts-only mode: just update district impacts for existing data
         if args.districts_only:
@@ -541,6 +581,7 @@ def main():
             district_impacts = compute_district_impacts(
                 state=state,
                 reform_dict=reform_config["reform"],
+                year=year,
             )
             if district_impacts:
                 impacts[reform_id]["districtImpacts"] = district_impacts
@@ -562,17 +603,19 @@ def main():
 
             # Get economy impact
             print("  Fetching economy impact (this may take a few minutes)...")
-            economy_data = get_economy_impact(policy_id, state)
+            economy_data = get_economy_impact(policy_id, state, time_period=year)
 
             # Extract and save impacts
             impacts[reform_id] = extract_impacts(economy_data)
             impacts[reform_id]["policyId"] = policy_id
             impacts[reform_id]["state"] = state.upper()
+            impacts[reform_id]["year"] = year
 
             # Compute district-level impacts
             district_impacts = compute_district_impacts(
                 state=state,
                 reform_dict=reform_config["reform"],
+                year=year,
             )
             if district_impacts:
                 impacts[reform_id]["districtImpacts"] = district_impacts
