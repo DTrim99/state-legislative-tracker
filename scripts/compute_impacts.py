@@ -1,29 +1,26 @@
 #!/usr/bin/env python3
 """
-Compute aggregate impacts for reforms using PolicyEngine API and Microsimulation.
+Compute reform impacts locally using PolicyEngine Microsimulation.
 
-This is the ONLY entry point for computing reform impacts. All computation goes
-through this script for reproducibility and auditability.
+This script runs everything locally (no API calls) for:
+- Efficiency: single simulation pass for state + district results
+- Consistency: uses same methodology as policyengine.py / policyengine-api
+
+Methodology matches:
+- policyengine.py/src/policyengine/outputs/ (poverty, decile, aggregate)
+- policyengine-api/tests/unit/endpoints/economy/test_compare.py (winners/losers buckets)
 
 Usage:
     python scripts/compute_impacts.py --reform-id sc-h4216
     python scripts/compute_impacts.py --list
     python scripts/compute_impacts.py --force --reform-id ut-sb60
-
-The script:
-1. Reads reform configs from Supabase (reform_impacts.reform_params)
-2. Calls PolicyEngine API for economy-wide impacts
-3. Runs local Microsimulation for district-level impacts
-4. Writes results back to Supabase
 """
 
 import argparse
 import os
-import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import numpy as np
-import requests
 
 # Import schema utilities for consistent data formatting
 from db_schema import (
@@ -37,8 +34,6 @@ from db_schema import (
 # =============================================================================
 # CONFIGURATION
 # =============================================================================
-
-API_BASE = "https://api.policyengine.org"
 
 # State FIPS codes for district filtering
 STATE_FIPS = {
@@ -61,8 +56,15 @@ STATE_DISTRICTS = {
     "NJ": 12, "NM": 3, "NY": 26, "NC": 14, "ND": 1, "OH": 15, "OK": 5,
     "OR": 6, "PA": 17, "RI": 2, "SC": 7, "SD": 1, "TN": 9, "TX": 38,
     "UT": 4, "VT": 1, "VA": 11, "WA": 10, "WV": 2, "WI": 8, "WY": 1,
-    "DC": 0,  # DC has no voting representative
+    "DC": 0,
 }
+
+# Winners/losers bucket thresholds (from policyengine-api test_compare.py)
+# These match the API methodology exactly
+GAIN_MORE_5PCT_THRESHOLD = 0.05      # > 5%
+GAIN_LESS_5PCT_THRESHOLD = 0.001     # > 0.1%
+NO_CHANGE_THRESHOLD = -0.001         # > -0.1%
+LOSE_LESS_5PCT_THRESHOLD = -0.05     # > -5%
 
 
 # =============================================================================
@@ -88,11 +90,7 @@ def get_supabase_client():
 
 
 def load_reforms_from_db(supabase, reform_id=None):
-    """
-    Load reform configs from database.
-
-    Returns list of reform dicts with: id, state, label, reform, computed
-    """
+    """Load reform configs from database."""
     query = supabase.table("research").select(
         "id, state, title, description, url, reform_impacts(reform_params, computed)"
     ).eq("type", "bill")
@@ -108,7 +106,6 @@ def load_reforms_from_db(supabase, reform_id=None):
         if not impact_data:
             continue
 
-        # Handle both single object and array responses from Supabase
         if isinstance(impact_data, list):
             impact_data = impact_data[0] if impact_data else {}
 
@@ -130,179 +127,11 @@ def load_reforms_from_db(supabase, reform_id=None):
 
 
 # =============================================================================
-# POLICYENGINE API
-# =============================================================================
-
-def create_policy(reform_data: dict) -> int:
-    """
-    Create a policy in PolicyEngine and return the policy ID.
-
-    Raises:
-        requests.HTTPError: If API request fails
-        KeyError: If response doesn't contain policy_id
-    """
-    response = requests.post(
-        f"{API_BASE}/us/policy",
-        json={"data": reform_data},
-        headers={"Content-Type": "application/json"}
-    )
-    response.raise_for_status()
-    result = response.json()
-
-    if "result" not in result or "policy_id" not in result["result"]:
-        raise KeyError(f"Unexpected API response: {result}")
-
-    return result["result"]["policy_id"]
-
-
-def get_economy_impact(policy_id: int, region: str, time_period: int = 2026) -> dict:
-    """
-    Fetch economy-wide impact for a policy.
-
-    Polls the API until computation is complete (up to 10 minutes).
-
-    Args:
-        policy_id: PolicyEngine policy ID
-        region: State code (e.g., "ut", "sc")
-        time_period: Year for simulation
-
-    Returns:
-        Economy impact data from API
-
-    Raises:
-        TimeoutError: If computation doesn't complete in time
-        requests.HTTPError: If API request fails
-    """
-    url = f"{API_BASE}/us/economy/{policy_id}/over/2"
-    params = {"region": region, "time_period": time_period}
-    max_retries = 60  # 10 minutes at 10s intervals
-
-    for attempt in range(max_retries):
-        response = requests.get(url, params=params)
-        response.raise_for_status()
-        result = response.json()
-
-        if result["status"] == "ok":
-            return result["result"]
-        elif result["status"] == "computing":
-            print(f"  Computing... (attempt {attempt + 1}/{max_retries})")
-            time.sleep(10)
-        else:
-            raise RuntimeError(f"API error: {result.get('message', 'Unknown error')}")
-
-    raise TimeoutError(f"Economy computation timed out after {max_retries * 10} seconds")
-
-
-def extract_impacts(economy_data: dict) -> dict:
-    """
-    Extract key impact metrics from economy API response.
-
-    Uses schema utilities to ensure frontend-compatible format.
-
-    Raises:
-        KeyError: If required data is missing from API response
-    """
-    # Budget impact - REQUIRED
-    if "budget" not in economy_data:
-        raise KeyError("API response missing 'budget' data")
-
-    budget = economy_data["budget"]
-    # Try state_tax_revenue_impact first (state-level), fall back to budgetary_impact
-    revenue_impact = budget.get("state_tax_revenue_impact")
-    if revenue_impact is None:
-        revenue_impact = budget.get("budgetary_impact")
-    if revenue_impact is None:
-        raise KeyError("API response missing revenue impact in 'budget'")
-
-    budgetary_impact = format_budgetary_impact(
-        state_revenue_impact=revenue_impact,
-        households=budget.get("households"),
-    )
-
-    # Poverty impact - REQUIRED
-    if "poverty" not in economy_data:
-        raise KeyError("API response missing 'poverty' data")
-
-    poverty_data = economy_data["poverty"].get("poverty", {})
-
-    if "all" not in poverty_data:
-        raise KeyError("API response missing 'poverty.poverty.all'")
-    all_pov = poverty_data["all"]
-    poverty_impact = format_poverty_impact(
-        baseline_rate=all_pov["baseline"],
-        reform_rate=all_pov["reform"],
-    )
-
-    if "child" not in poverty_data:
-        raise KeyError("API response missing 'poverty.poverty.child'")
-    child_pov = poverty_data["child"]
-    child_poverty_impact = format_poverty_impact(
-        baseline_rate=child_pov["baseline"],
-        reform_rate=child_pov["reform"],
-    )
-
-    # Winners/Losers - REQUIRED
-    if "intra_decile" not in economy_data:
-        raise KeyError("API response missing 'intra_decile' data")
-
-    intra = economy_data["intra_decile"].get("all", {})
-    winners_losers = format_winners_losers(
-        gain_more_5pct=intra["Gain more than 5%"],
-        gain_less_5pct=intra["Gain less than 5%"],
-        no_change=intra["No change"],
-        lose_less_5pct=intra["Lose less than 5%"],
-        lose_more_5pct=intra["Lose more than 5%"],
-    )
-
-    # Decile impact - REQUIRED
-    if "decile" not in economy_data:
-        raise KeyError("API response missing 'decile' data")
-
-    decile_data = economy_data["decile"]
-    if "average" not in decile_data:
-        raise KeyError("API response missing 'decile.average'")
-
-    # Extract average values for deciles 1-10
-    avg = decile_data["average"]
-    decile_values = [avg[str(i)] for i in range(1, 11)]
-    decile_impact = format_decile_impact(decile_values)
-
-    # Inequality - optional but log if missing
-    inequality = None
-    if "inequality" in economy_data:
-        ineq = economy_data["inequality"]
-        gini = ineq.get("gini", {})
-        inequality = {
-            "giniBaseline": gini.get("baseline"),
-            "giniReform": gini.get("reform"),
-        }
-
-    return {
-        "computed": True,
-        "computedAt": datetime.utcnow().isoformat(),
-        "budgetaryImpact": budgetary_impact,
-        "povertyImpact": poverty_impact,
-        "childPovertyImpact": child_poverty_impact,
-        "winnersLosers": winners_losers,
-        "decileImpact": decile_impact,
-        "inequality": inequality,
-    }
-
-
-# =============================================================================
-# DISTRICT-LEVEL COMPUTATION (Local Microsimulation)
+# MICROSIMULATION
 # =============================================================================
 
 def get_state_dataset(state: str) -> str:
-    """
-    Download state-specific dataset from Hugging Face.
-
-    Returns path to the downloaded H5 file.
-
-    Raises:
-        ImportError: If huggingface_hub not installed
-        Exception: If download fails
-    """
+    """Download state-specific dataset from Hugging Face."""
     try:
         from huggingface_hub import hf_hub_download
     except ImportError:
@@ -323,30 +152,267 @@ def get_state_dataset(state: str) -> str:
     return dataset_path
 
 
-def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) -> dict:
+def create_reform_class(reform_params: dict):
+    """Create a PolicyEngine Reform class from parameter dict."""
+    import re
+    from policyengine_core.reforms import Reform
+    from policyengine_core.periods import instant
+
+    def modify_params(params):
+        for param_path, values in reform_params.items():
+            param = params
+            # Split path and handle array indices like "brackets[0]"
+            parts = param_path.split(".")
+            for part in parts:
+                # Check for array index notation: "brackets[0]"
+                match = re.match(r"(\w+)\[(\d+)\]", part)
+                if match:
+                    attr_name = match.group(1)
+                    index = int(match.group(2))
+                    # Get the list attribute and index into it
+                    param = getattr(param, attr_name)[index]
+                else:
+                    param = getattr(param, part)
+            for period, value in values.items():
+                if "." in period and len(period) > 10:
+                    start_str, stop_str = period.split(".")
+                else:
+                    start_str = period if "-" in period else f"{period}-01-01"
+                    stop_str = "2100-12-31"
+                param.update(
+                    start=instant(start_str),
+                    stop=instant(stop_str),
+                    value=value
+                )
+        return params
+
+    class DynamicReform(Reform):
+        def apply(self):
+            self.modify_parameters(modify_params)
+
+    return DynamicReform
+
+
+def run_simulations(state: str, reform_params: dict, year: int = 2026):
     """
-    Compute district-level impacts using PolicyEngine Microsimulation.
+    Run baseline and reform microsimulations.
 
-    Runs a full microsimulation with state-specific data to get impacts
-    by congressional district.
-
-    Args:
-        state: State code (e.g., "ut", "sc")
-        reform_dict: PolicyEngine reform parameters
-        year: Simulation year
-
-    Returns:
-        Dict mapping district IDs (e.g., "SC-1") to impact data
+    Returns tuple of (baseline, reformed) Microsimulation objects.
     """
-    # Check dependencies
-    try:
-        from policyengine_us import Microsimulation
-        from policyengine_core.reforms import Reform
-        from policyengine_core.periods import instant
-        from microdf import MicroSeries
-    except ImportError as e:
-        print(f"  Skipping district impacts: {e}")
-        return {}
+    from policyengine_us import Microsimulation
+
+    state_dataset = get_state_dataset(state)
+    ReformClass = create_reform_class(reform_params)
+
+    print("    Running baseline simulation...")
+    baseline = Microsimulation(dataset=state_dataset)
+
+    print("    Running reform simulation...")
+    reformed = Microsimulation(reform=ReformClass, dataset=state_dataset)
+
+    return baseline, reformed
+
+
+# =============================================================================
+# IMPACT CALCULATIONS (matching policyengine.py methodology)
+# =============================================================================
+
+def compute_budgetary_impact(baseline, reformed, state: str, year: int = 2026) -> dict:
+    """
+    Compute state revenue impact.
+
+    Methodology: Sum of state_income_tax change, weighted by tax_unit_weight.
+
+    Note: Since we use state-specific datasets (e.g., SC.h5), all tax units
+    in the dataset are already from the target state. No additional filtering needed.
+    """
+    from microdf import MicroSeries
+
+    # Get state income tax (at tax_unit level)
+    baseline_tax = baseline.calculate("state_income_tax", year).values
+    reform_tax = reformed.calculate("state_income_tax", year).values
+    tax_unit_weight = baseline.calculate("tax_unit_weight", year).values
+
+    # Compute weighted sum of tax change (state dataset already filtered)
+    baseline_revenue = MicroSeries(baseline_tax, weights=tax_unit_weight).sum()
+    reform_revenue = MicroSeries(reform_tax, weights=tax_unit_weight).sum()
+
+    revenue_change = float(reform_revenue - baseline_revenue)
+
+    # Count affected households
+    household_weight = baseline.calculate("household_weight", year).values
+    hh_state_code = baseline.calculate("state_code_str", year).values
+    in_state_hh = hh_state_code == state.upper()
+    total_households = int(np.sum(household_weight[in_state_hh]))
+
+    return format_budgetary_impact(
+        state_revenue_impact=revenue_change,
+        households=total_households,
+    )
+
+
+def compute_poverty_impact(baseline, reformed, state: str, year: int = 2026, child_only: bool = False) -> dict:
+    """
+    Compute poverty rate change.
+
+    Methodology from policyengine.py/outputs/poverty.py:
+    - Variable: spm_unit_is_in_spm_poverty (mapped to person level)
+    - Weighted by person_weight
+    - Optional filter by is_child for child poverty
+
+    Note: Since we use state-specific datasets, no additional state filtering needed.
+    """
+    from microdf import MicroSeries
+
+    # Get poverty status (SPM unit level, mapped to person level)
+    baseline_poverty = baseline.calculate("spm_unit_is_in_spm_poverty", year, map_to="person").values
+    reform_poverty = reformed.calculate("spm_unit_is_in_spm_poverty", year, map_to="person").values
+    person_weight = baseline.calculate("person_weight", year).values
+
+    # Optional child filter (state dataset already filtered to state)
+    if child_only:
+        is_child = baseline.calculate("is_child", year).values
+        mask = is_child
+    else:
+        mask = np.ones(len(person_weight), dtype=bool)
+
+    # Compute weighted poverty rates
+    baseline_poor = MicroSeries(baseline_poverty[mask].astype(float), weights=person_weight[mask])
+    reform_poor = MicroSeries(reform_poverty[mask].astype(float), weights=person_weight[mask])
+
+    baseline_rate = float(baseline_poor.mean())
+    reform_rate = float(reform_poor.mean())
+
+    return format_poverty_impact(
+        baseline_rate=baseline_rate,
+        reform_rate=reform_rate,
+    )
+
+
+def compute_winners_losers(baseline, reformed, state: str, year: int = 2026) -> dict:
+    """
+    Compute winners/losers breakdown using 5% threshold buckets.
+
+    Methodology from policyengine-api/tests/unit/endpoints/economy/test_compare.py:
+    - percent_change > 0.05 → "Gain more than 5%"
+    - percent_change > 0.001 → "Gain less than 5%"
+    - percent_change > -0.001 → "No change"
+    - percent_change > -0.05 → "Lose less than 5%"
+    - else → "Lose more than 5%"
+
+    Computed per decile, then averaged (matching intra_decile methodology).
+    """
+    from microdf import MicroSeries
+
+    # Get household income (state dataset already filtered)
+    baseline_income = baseline.calculate("household_net_income", year).values
+    reform_income = reformed.calculate("household_net_income", year).values
+    household_weight = baseline.calculate("household_weight", year).values
+    household_count_people = baseline.calculate("household_count_people", year).values
+    household_income_decile = baseline.calculate("household_income_decile", year).values
+
+    # Compute relative income change
+    # Cap baseline at 1 to avoid division by zero (matching API)
+    capped_baseline = np.maximum(baseline_income, 1)
+    income_change = reform_income - baseline_income
+    relative_change = income_change / capped_baseline
+
+    # Assign to buckets
+    gain_more_5pct = relative_change > GAIN_MORE_5PCT_THRESHOLD
+    gain_less_5pct = (relative_change > GAIN_LESS_5PCT_THRESHOLD) & ~gain_more_5pct
+    no_change = (relative_change > NO_CHANGE_THRESHOLD) & (relative_change <= GAIN_LESS_5PCT_THRESHOLD)
+    lose_less_5pct = (relative_change > LOSE_LESS_5PCT_THRESHOLD) & (relative_change <= NO_CHANGE_THRESHOLD)
+    lose_more_5pct = relative_change <= LOSE_LESS_5PCT_THRESHOLD
+
+    # Compute proportions per decile, then average (matching intra_decile methodology)
+    decile_results = {
+        "gain_more_5pct": [],
+        "gain_less_5pct": [],
+        "no_change": [],
+        "lose_less_5pct": [],
+        "lose_more_5pct": [],
+    }
+
+    for decile in range(1, 11):
+        in_decile = household_income_decile == decile
+        if not np.any(in_decile):
+            for key in decile_results:
+                decile_results[key].append(0.0)
+            continue
+
+        people = MicroSeries(household_count_people[in_decile], weights=household_weight[in_decile])
+        total_people = float(people.sum())
+
+        if total_people == 0:
+            for key in decile_results:
+                decile_results[key].append(0.0)
+            continue
+
+        decile_results["gain_more_5pct"].append(
+            float(people[gain_more_5pct[in_decile]].sum()) / total_people
+        )
+        decile_results["gain_less_5pct"].append(
+            float(people[gain_less_5pct[in_decile]].sum()) / total_people
+        )
+        decile_results["no_change"].append(
+            float(people[no_change[in_decile]].sum()) / total_people
+        )
+        decile_results["lose_less_5pct"].append(
+            float(people[lose_less_5pct[in_decile]].sum()) / total_people
+        )
+        decile_results["lose_more_5pct"].append(
+            float(people[lose_more_5pct[in_decile]].sum()) / total_people
+        )
+
+    # Average across deciles (matching API's intra_decile "all" calculation)
+    return format_winners_losers(
+        gain_more_5pct=sum(decile_results["gain_more_5pct"]) / 10,
+        gain_less_5pct=sum(decile_results["gain_less_5pct"]) / 10,
+        no_change=sum(decile_results["no_change"]) / 10,
+        lose_less_5pct=sum(decile_results["lose_less_5pct"]) / 10,
+        lose_more_5pct=sum(decile_results["lose_more_5pct"]) / 10,
+    )
+
+
+def compute_decile_impact(baseline, reformed, state: str, year: int = 2026) -> dict:
+    """
+    Compute average income change by decile.
+
+    Methodology from policyengine.py/outputs/decile_impact.py:
+    - Group households by baseline income decile
+    - Compute mean income change per decile
+
+    Note: Since we use state-specific datasets, no additional state filtering needed.
+    """
+    from microdf import MicroSeries
+
+    baseline_income = baseline.calculate("household_net_income", year).values
+    reform_income = reformed.calculate("household_net_income", year).values
+    household_weight = baseline.calculate("household_weight", year).values
+    household_income_decile = baseline.calculate("household_income_decile", year).values
+
+    income_change = reform_income - baseline_income
+
+    decile_values = []
+    for decile in range(1, 11):
+        in_decile = household_income_decile == decile
+        if not np.any(in_decile):
+            decile_values.append(0.0)
+            continue
+
+        change_series = MicroSeries(income_change[in_decile], weights=household_weight[in_decile])
+        decile_values.append(float(change_series.mean()))
+
+    return format_decile_impact(decile_values)
+
+
+def compute_district_impacts(baseline, reformed, state: str, year: int = 2026) -> dict:
+    """
+    Compute impacts by congressional district.
+
+    Uses same methodology as state-level but filtered by district.
+    """
+    from microdf import MicroSeries
 
     state_upper = state.upper()
 
@@ -361,140 +427,78 @@ def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) ->
 
     state_fips = STATE_FIPS[state_upper]
 
-    print("  Computing district-level impacts...")
+    # Get variables (state dataset already filtered to state)
+    baseline_income = baseline.calculate("household_net_income", year).values
+    reform_income = reformed.calculate("household_net_income", year).values
+    income_change = reform_income - baseline_income
+    household_weight = baseline.calculate("household_weight", year).values
+    household_count_people = baseline.calculate("household_count_people", year).values
+    household_income_decile = baseline.calculate("household_income_decile", year).values
+    cd_geoid = baseline.calculate("congressional_district_geoid", year).values
 
-    # Download state-specific dataset
-    try:
-        state_dataset = get_state_dataset(state)
-    except Exception as e:
-        print(f"  Error downloading state dataset: {e}")
+    # Check if congressional district data is available
+    unique_geoids = np.unique(cd_geoid)
+    if len(unique_geoids) == 1 and unique_geoids[0] == 0:
+        print("    Warning: Congressional district data not available")
         return {}
 
-    # Create reform class dynamically
-    def create_reform_class(parameters):
-        def modify_params(params):
-            for param_path, values in parameters.items():
-                param = params
-                for key in param_path.split("."):
-                    param = getattr(param, key)
-                for period, value in values.items():
-                    # Handle period format "2026-01-01.2100-12-31" or just "2026"
-                    if "." in period and len(period) > 10:
-                        start_str, stop_str = period.split(".")
-                    else:
-                        start_str = period if "-" in period else f"{period}-01-01"
-                        stop_str = "2100-12-31"
-                    param.update(
-                        start=instant(start_str),
-                        stop=instant(stop_str),
-                        value=value
-                    )
-            return params
+    # Compute relative change for winners calculation
+    capped_baseline = np.maximum(baseline_income, 1)
+    relative_change = income_change / capped_baseline
 
-        class DynamicReform(Reform):
-            def apply(self):
-                self.modify_parameters(modify_params)
+    district_impacts = {}
 
-        return DynamicReform
+    for district_num in range(1, num_districts + 1):
+        district_geoid = state_fips * 100 + district_num
+        in_district = cd_geoid == district_geoid
 
-    try:
-        ReformClass = create_reform_class(reform_dict)
+        if not np.any(in_district):
+            continue
 
-        # Run simulations
-        print("    Running baseline simulation...")
-        baseline = Microsimulation(dataset=state_dataset)
+        district_weights = household_weight[in_district]
+        district_income_change = income_change[in_district]
 
-        print("    Running reform simulation...")
-        reformed = Microsimulation(reform=ReformClass, dataset=state_dataset)
+        # Basic metrics
+        total_households = float(np.sum(district_weights))
+        total_benefit = float(np.sum(district_income_change * district_weights))
+        avg_benefit = total_benefit / total_households if total_households > 0 else 0
 
-        # Extract variables
-        baseline_income = baseline.calculate("household_net_income", year).values
-        reform_income = reformed.calculate("household_net_income", year).values
-        income_change = reform_income - baseline_income
+        # Winners share (matching API methodology: > 0.1% = winner)
+        district_people = MicroSeries(
+            household_count_people[in_district],
+            weights=district_weights
+        )
+        district_decile = household_income_decile[in_district]
+        district_relative = relative_change[in_district]
+        is_winner = district_relative > GAIN_LESS_5PCT_THRESHOLD  # > 0.1%
 
-        household_weight = baseline.calculate("household_weight", year).values
-        household_count_people = baseline.calculate("household_count_people", year).values
-        household_income_decile = baseline.calculate("household_income_decile", year).values
-        state_code = baseline.calculate("state_code_str", year).values
-        cd_geoid = baseline.calculate("congressional_district_geoid", year).values
-
-        # Verify congressional district data exists
-        unique_geoids = np.unique(cd_geoid)
-        if len(unique_geoids) == 1 and unique_geoids[0] == 0:
-            print("    Warning: Congressional district data not available")
-            return {}
-
-        # Filter to state
-        in_state = state_code == state_upper
-
-        # Compute per-district impacts
-        district_impacts = {}
-
-        for district_num in range(1, num_districts + 1):
-            district_geoid = state_fips * 100 + district_num
-            in_district = (cd_geoid == district_geoid) & in_state
-
-            if not np.any(in_district):
+        # Calculate per decile, then average
+        decile_proportions = []
+        for decile in range(1, 11):
+            in_decile = district_decile == decile
+            if not np.any(in_decile):
+                decile_proportions.append(0.0)
                 continue
+            people_in_decile = float(district_people[in_decile].sum())
+            winners_in_decile = float(district_people[in_decile & is_winner].sum())
+            proportion = winners_in_decile / people_in_decile if people_in_decile > 0 else 0.0
+            decile_proportions.append(proportion)
 
-            district_weights = household_weight[in_district]
-            district_income_change = income_change[in_district]
+        winners_share = sum(decile_proportions) / 10
 
-            # Basic metrics
-            total_households = float(np.sum(district_weights))
-            total_benefit = float(np.sum(district_income_change * district_weights))
-            avg_benefit = total_benefit / total_households if total_households > 0 else 0
+        district_id = f"{state_upper}-{district_num}"
+        district_impacts[district_id] = format_district_impact(
+            district_id=district_id,
+            district_name=f"Congressional District {district_num}",
+            avg_benefit=avg_benefit,
+            households_affected=int(total_households),
+            total_benefit=total_benefit,
+            winners_share=winners_share,
+        )
 
-            # Winners share calculation (matching API methodology)
-            district_baseline = baseline_income[in_district]
-            district_reform = reform_income[in_district]
-            absolute_change = district_reform - district_baseline
-            capped_baseline = np.maximum(district_baseline, 1)
-            capped_reform = np.maximum(district_reform, 1) + absolute_change
-            relative_change = (capped_reform - capped_baseline) / capped_baseline
+        print(f"    District {district_num}: ${avg_benefit:.0f} avg, {winners_share:.1%} winners")
 
-            district_people = MicroSeries(
-                household_count_people[in_district],
-                weights=district_weights
-            )
-            district_decile = household_income_decile[in_district]
-
-            # API threshold: > 0.1% gain = winner
-            is_winner = relative_change > 0.001
-
-            # Calculate proportion of winners per decile, then average
-            decile_proportions = []
-            for decile in range(1, 11):
-                in_decile = district_decile == decile
-                if not np.any(in_decile):
-                    decile_proportions.append(0.0)
-                    continue
-                people_in_decile = float(district_people[in_decile].sum())
-                winners_in_decile = float(district_people[in_decile & is_winner].sum())
-                proportion = winners_in_decile / people_in_decile if people_in_decile > 0 else 0.0
-                decile_proportions.append(proportion)
-
-            winners_share = sum(decile_proportions) / 10
-
-            district_id = f"{state_upper}-{district_num}"
-            district_impacts[district_id] = format_district_impact(
-                district_id=district_id,
-                district_name=f"Congressional District {district_num}",
-                avg_benefit=avg_benefit,
-                households_affected=int(total_households),
-                total_benefit=total_benefit,
-                winners_share=winners_share,
-            )
-
-            print(f"    District {district_num}: ${avg_benefit:.0f} avg benefit, {winners_share:.1%} winners")
-
-        return district_impacts
-
-    except Exception as e:
-        print(f"  Error computing district impacts: {e}")
-        import traceback
-        traceback.print_exc()
-        return {}
+    return district_impacts
 
 
 # =============================================================================
@@ -502,22 +506,16 @@ def compute_district_impacts(state: str, reform_dict: dict, year: int = 2026) ->
 # =============================================================================
 
 def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: dict):
-    """
-    Write impacts to Supabase reform_impacts table.
-
-    Converts camelCase keys to snake_case for database columns.
-    """
+    """Write impacts to Supabase reform_impacts table."""
     record = {
         "id": reform_id,
         "computed": True,
         "computed_at": impacts["computedAt"],
-        "policy_id": impacts.get("policyId"),
         "budgetary_impact": impacts["budgetaryImpact"],
         "poverty_impact": impacts["povertyImpact"],
         "child_poverty_impact": impacts["childPovertyImpact"],
         "winners_losers": impacts["winnersLosers"],
         "decile_impact": impacts["decileImpact"],
-        "inequality": impacts.get("inequality"),
         "district_impacts": impacts.get("districtImpacts"),
         "reform_params": reform_params,
     }
@@ -532,7 +530,7 @@ def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: di
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Compute aggregate impacts for reforms stored in Supabase",
+        description="Compute reform impacts locally using PolicyEngine Microsimulation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -544,9 +542,6 @@ Examples:
 
     # Force recomputation
     python scripts/compute_impacts.py --force --reform-id ut-sb60
-
-    # Update only district impacts
-    python scripts/compute_impacts.py --districts-only --reform-id sc-h4216
         """
     )
     parser.add_argument(
@@ -560,14 +555,15 @@ Examples:
         help="Force recomputation even if already computed"
     )
     parser.add_argument(
-        "--districts-only",
-        action="store_true",
-        help="Only compute district impacts (skip API call)"
-    )
-    parser.add_argument(
         "--list",
         action="store_true",
         help="List available reforms and exit"
+    )
+    parser.add_argument(
+        "--year",
+        type=int,
+        default=2026,
+        help="Simulation year (default: 2026)"
     )
     args = parser.parse_args()
 
@@ -579,7 +575,7 @@ Examples:
         return 1
 
     print("=" * 60)
-    print("PolicyEngine Impact Calculator")
+    print("PolicyEngine Impact Calculator (Local)")
     print("=" * 60)
 
     # Load reforms from database
@@ -619,56 +615,55 @@ Examples:
             results[reform_id] = "skipped"
             continue
 
-        # Districts-only mode
-        if args.districts_only:
-            if not reform["computed"]:
-                print("  Not yet computed, cannot update districts only")
-                results[reform_id] = "skipped"
-                continue
-
-            print("  Computing district impacts only...")
-            district_impacts = compute_district_impacts(state, reform["reform"])
-
-            if district_impacts:
-                supabase.table("reform_impacts").update({
-                    "district_impacts": district_impacts
-                }).eq("id", reform_id).execute()
-                print("  District impacts updated")
-                results[reform_id] = "districts_updated"
-            else:
-                results[reform_id] = "no_districts"
-            continue
-
-        # Full computation
         try:
-            print("  [1/4] Creating policy in PolicyEngine API...")
-            policy_id = create_policy(reform["reform"])
-            print(f"        Policy ID: {policy_id}")
+            # Run simulations
+            print("  [1/6] Running microsimulations...")
+            baseline, reformed = run_simulations(state, reform["reform"], args.year)
 
-            print("  [2/4] Fetching economy impact...")
-            economy_data = get_economy_impact(policy_id, state)
+            # Compute all impacts
+            print("  [2/6] Computing budgetary impact...")
+            budgetary_impact = compute_budgetary_impact(baseline, reformed, state, args.year)
+            print(f"        Revenue change: ${budgetary_impact['stateRevenueImpact']:,.0f}")
 
-            print("  [3/4] Processing results...")
-            impacts = extract_impacts(economy_data)
-            impacts["policyId"] = policy_id
+            print("  [3/6] Computing poverty impact...")
+            poverty_impact = compute_poverty_impact(baseline, reformed, state, args.year)
+            print(f"        Baseline: {poverty_impact['baselineRate']:.2%} → Reform: {poverty_impact['reformRate']:.2%}")
 
-            print("  [4/4] Computing district impacts...")
-            district_impacts = compute_district_impacts(state, reform["reform"])
+            print("  [4/6] Computing child poverty impact...")
+            child_poverty_impact = compute_poverty_impact(baseline, reformed, state, args.year, child_only=True)
+
+            print("  [5/6] Computing winners/losers...")
+            winners_losers = compute_winners_losers(baseline, reformed, state, args.year)
+            gain_total = winners_losers['gainMore5Pct'] + winners_losers['gainLess5Pct']
+            lose_total = winners_losers['loseLess5Pct'] + winners_losers['loseMore5Pct']
+            print(f"        Winners: {gain_total:.1%} | No change: {winners_losers['noChange']:.1%} | Losers: {lose_total:.1%}")
+
+            print("  [6/6] Computing decile and district impacts...")
+            decile_impact = compute_decile_impact(baseline, reformed, state, args.year)
+            district_impacts = compute_district_impacts(baseline, reformed, state, args.year)
+
+            # Assemble results
+            impacts = {
+                "computed": True,
+                "computedAt": datetime.now(timezone.utc).isoformat(),
+                "budgetaryImpact": budgetary_impact,
+                "povertyImpact": poverty_impact,
+                "childPovertyImpact": child_poverty_impact,
+                "winnersLosers": winners_losers,
+                "decileImpact": decile_impact,
+            }
             if district_impacts:
                 impacts["districtImpacts"] = district_impacts
 
+            # Write to database
             print("  Writing to Supabase...")
             write_to_supabase(supabase, reform_id, impacts, reform["reform"])
 
-            revenue = impacts["budgetaryImpact"]["stateRevenueImpact"]
-            print(f"\n  Complete!")
-            print(f"    Revenue impact: ${revenue:,.0f}")
-            print(f"    Policy ID: {policy_id}")
-
+            print(f"\n  ✓ Complete!")
             results[reform_id] = "computed"
 
         except Exception as e:
-            print(f"  Error: {e}")
+            print(f"  ✗ Error: {e}")
             import traceback
             traceback.print_exc()
             results[reform_id] = f"error: {e}"
@@ -680,7 +675,6 @@ Examples:
     for reform_id, status in results.items():
         print(f"  {reform_id}: {status}")
 
-    # Return non-zero if any errors
     if any("error" in str(s) for s in results.values()):
         return 1
     return 0
