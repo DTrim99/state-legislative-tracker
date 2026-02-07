@@ -43,6 +43,8 @@ export function DataProvider({ children }) {
             inequality: item.inequality,
             districtImpacts: item.district_impacts,
             reformParams: item.reform_params,
+            provisions: item.provisions,
+            modelNotes: item.model_notes,
           };
         }
         setReformImpacts(impactsDict);

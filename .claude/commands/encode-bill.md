@@ -78,25 +78,37 @@ No further action needed unless PE-US has been updated.
                                 │
                                 ▼
                     ┌───────────────────────────────┐
-                    │   CHECKPOINT #1: REVIEW MAP   │
+                    │  PHASE 3: MODEL DESCRIPTION   │
+                    │  (model-describer agent)      │
+                    │                               │
+                    │  Generates:                   │
+                    │  • provisions[] array         │
+                    │  • model_notes string         │
                     └───────────────────────────────┘
                                 │
                                 ▼
                     ┌───────────────────────────────┐
-                    │  PHASE 3: WRITE TO DATABASE   │
-                    │  (research + reform_params)   │
+                    │   CHECKPOINT #1: REVIEW       │
+                    │   Mapping + Description       │
                     └───────────────────────────────┘
                                 │
                                 ▼
                     ┌───────────────────────────────┐
-                    │  PHASE 4: RUN SCRIPT          │
+                    │  PHASE 4: WRITE TO DATABASE   │
+                    │  (research + reform_impacts   │
+                    │   with provisions)            │
+                    └───────────────────────────────┘
+                                │
+                                ▼
+                    ┌───────────────────────────────┐
+                    │  PHASE 5: RUN SCRIPT          │
                     │                               │
                     │  python compute_impacts.py    │
                     │    --reform-id {id}           │
                     │                               │
                     │  Script handles:              │
-                    │  • PE API calls               │
-                    │  • District microsimulation   │
+                    │  • Local microsimulation      │
+                    │  • District-level impacts     │
                     │  • Schema formatting          │
                     │  • Database writes            │
                     └───────────────────────────────┘
@@ -109,7 +121,7 @@ No further action needed unless PE-US has been updated.
                                 │
                                 ▼
                     ┌───────────────────────────────┐
-                    │  PHASE 5: VERIFY IN APP       │
+                    │  PHASE 6: VERIFY IN APP       │
                     └───────────────────────────────┘
                                 │
                                 ▼
@@ -154,24 +166,51 @@ Effective date: {effective_date}
 Generate reform JSON and verify parameters exist.
 ```
 
+## Phase 3: Model Description
+
+Spawn model-describer agent:
+```
+Task: model-describer
+Prompt: Generate human-readable descriptions for this reform:
+
+State: {STATE}
+Bill: {BILL_NUMBER}
+Reform JSON: {reform_json from param-mapper}
+Bill provisions: {provisions from bill-researcher}
+
+Return provisions array and model_notes string.
+```
+
+The agent will return:
+```json
+{
+  "provisions": [
+    {
+      "parameter": "gov.states.ok.tax.income.credits.earned_income.eitc_fraction",
+      "label": "Oklahoma State EITC",
+      "baseline": "None",
+      "reform": "10% of federal EITC",
+      "explanation": "Creates a new Oklahoma state EITC equal to 10% of the federal credit."
+    }
+  ],
+  "model_notes": "This analysis uses PolicyEngine's Enhanced CPS microdata for Oklahoma, projected to tax year 2026."
+}
+```
+
 ## Checkpoint #1: User Review
 
-Present the mapping for approval:
+Present the mapping AND model description for approval:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════
-PARAMETER MAPPING REVIEW
+PARAMETER MAPPING & MODEL DESCRIPTION REVIEW
 ═══════════════════════════════════════════════════════════════════════════
 
 Bill: {STATE} {BILL_NUMBER}
 Title: {title}
 Effective: {effective_date}
 
-PROVISIONS:
-  1. {provision_1}
-  2. {provision_2}
-
-PROPOSED REFORM JSON:
+REFORM JSON:
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ {                                                                       │
 │   "gov.states.ut.tax.income.rate": {                                    │
@@ -180,16 +219,26 @@ PROPOSED REFORM JSON:
 │ }                                                                       │
 └─────────────────────────────────────────────────────────────────────────┘
 
+WHAT WE MODEL (for Overview tab):
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Parameter                    │ Current    │ Proposed                   │
+│──────────────────────────────│────────────│────────────────────────────│
+│ Utah Income Tax Rate         │ 4.85%      │ 4.45%                      │
+└─────────────────────────────────────────────────────────────────────────┘
+
+Explanation: Reduces Utah's flat income tax rate from 4.85% to 4.45%,
+providing tax relief to all Utah taxpayers.
+
 FISCAL NOTE ESTIMATE: -$83.6M (annual)
 
 ═══════════════════════════════════════════════════════════════════════════
 ```
 
 Use `AskUserQuestion` to confirm:
-- Does this mapping look correct?
+- Does this mapping and description look correct?
 - Options: Yes / No, adjust / Cancel
 
-## Phase 3: Write Reform Config to Database
+## Phase 4: Write Reform Config to Database
 
 **IMPORTANT**: Before computing impacts, write the reform config to the database.
 This ensures the reform is tracked and can be re-computed if needed.
@@ -214,19 +263,21 @@ research = {
 }
 supabase.table("research").upsert(research).execute()
 
-# 2. Upsert reform_impacts with reform_params (impacts will be computed by script)
+# 2. Upsert reform_impacts with reform_params AND provisions
 reform_impacts = {
     "id": "{state}-{bill}".lower(),
     "computed": False,
     "reform_params": {REFORM_JSON},
+    "provisions": {PROVISIONS_ARRAY},  # From model-describer
+    "model_notes": "{MODEL_NOTES}",     # From model-describer
 }
 supabase.table("reform_impacts").upsert(reform_impacts).execute()
 
-print("Reform config written to database")
+print("Reform config and provisions written to database")
 EOF
 ```
 
-## Phase 4: Compute Impacts (via script)
+## Phase 5: Compute Impacts (via script)
 
 **Run the compute_impacts.py script** - this is the ONLY way to compute impacts:
 
@@ -271,7 +322,7 @@ Use `AskUserQuestion`:
 - Results look correct?
 - Options: Yes, update status to computed / Re-compute with --force / Cancel
 
-## Phase 5: Verify and Finalize
+## Phase 6: Verify and Finalize
 
 1. **Check the app** - refresh to see the bill with computed impacts
 2. **Update status** if everything looks good:
@@ -325,6 +376,7 @@ VIEW IN SUPABASE:
 | bill-researcher | Fetch and parse bill text | `.claude/agents/bill-researcher.md` |
 | fiscal-finder | Find fiscal notes and analyses | `.claude/agents/fiscal-finder.md` |
 | param-mapper | Map to PolicyEngine parameters | `.claude/agents/param-mapper.md` |
+| model-describer | Generate human-readable descriptions | `.claude/agents/model-describer.md` |
 
 ## Scripts Used
 

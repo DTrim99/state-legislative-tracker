@@ -469,6 +469,7 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
           reformConfig={activeBill.reformConfig}
           stateAbbr={stateAbbr}
           billUrl={activeBill.url}
+          bill={activeBill}
           onClose={() => setActiveBill(null)}
         />
       )}

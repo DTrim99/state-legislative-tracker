@@ -8,6 +8,7 @@ import HouseholdForm from "./HouseholdForm";
 import ResultsDisplay from "./ResultsDisplay";
 import AggregateImpacts from "./AggregateImpacts";
 import DistrictMap from "./DistrictMap";
+import BillOverview from "./BillOverview";
 
 const CloseIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -30,6 +31,13 @@ const MapIcon = () => (
 const UserIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+);
+
+const InfoIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4M12 8h.01" />
   </svg>
 );
 
@@ -68,15 +76,16 @@ const Spinner = () => (
 );
 
 const TABS = [
+  { id: "overview", label: "Overview", icon: InfoIcon },
   { id: "statewide", label: "Statewide", icon: ChartIcon },
   { id: "districts", label: "Districts", icon: MapIcon },
   { id: "household", label: "Your Household", icon: UserIcon },
 ];
 
-export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClose }) {
+export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, bill, onClose }) {
   const { compareReform, loading, error } = usePolicyEngineAPI();
   const { getImpact } = useData();
-  const [activeTab, setActiveTab] = useState("statewide");
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Get pre-computed aggregate impacts
   const aggregateImpacts = getImpact(reformConfig.id);
@@ -247,6 +256,11 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClo
           overflowY: "auto",
           flex: 1,
         }}>
+          {/* Overview Tab */}
+          {activeTab === "overview" && (
+            <BillOverview bill={bill} impact={aggregateImpacts} />
+          )}
+
           {/* Statewide Tab */}
           {activeTab === "statewide" && (
             <AggregateImpacts impacts={aggregateImpacts} />
