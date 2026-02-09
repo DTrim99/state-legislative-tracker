@@ -19,8 +19,10 @@ Usage:
 import argparse
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 
 import numpy as np
+import yaml
 
 # Import schema utilities for consistent data formatting
 from db_schema import (
@@ -506,6 +508,34 @@ def compute_district_impacts(baseline, reformed, state: str, year: int = 2026) -
 # DATABASE WRITE
 # =============================================================================
 
+def get_changelog_version(repo_path: str) -> str:
+    """Read version from a PolicyEngine repo's changelog.yaml."""
+    changelog = Path(repo_path) / "changelog.yaml"
+    if not changelog.exists():
+        return "unknown"
+    with open(changelog) as f:
+        entries = yaml.safe_load(f)
+    version = [0, 0, 1]
+    for entry in entries:
+        if "version" in entry:
+            version = [int(x) for x in str(entry["version"]).split(".")]
+        elif "bump" in entry:
+            bump = entry["bump"]
+            if bump == "major":
+                version = [version[0] + 1, 0, 0]
+            elif bump == "minor":
+                version = [version[0], version[1] + 1, 0]
+            elif bump == "patch":
+                version = [version[0], version[1], version[2] + 1]
+    return f"{version[0]}.{version[1]}.{version[2]}"
+
+
+# Repo paths (sibling directories of this project)
+_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+_PE_US_REPO = _PROJECT_ROOT / "policyengine-us"
+_PE_US_DATA_REPO = _PROJECT_ROOT / "policyengine-us-data"
+
+
 def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: dict):
     """Write impacts to Supabase reform_impacts table."""
     record = {
@@ -519,6 +549,9 @@ def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: di
         "decile_impact": impacts["decileImpact"],
         "district_impacts": impacts.get("districtImpacts"),
         "reform_params": reform_params,
+        "policyengine_us_version": get_changelog_version(str(_PE_US_REPO)),
+        "dataset_name": "policyengine-us-data",
+        "dataset_version": get_changelog_version(str(_PE_US_DATA_REPO)),
     }
 
     result = supabase.table("reform_impacts").upsert(record).execute()

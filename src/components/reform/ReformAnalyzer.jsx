@@ -368,6 +368,14 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, bill,
             color: colors.text.tertiary,
           }}>
             Powered by <a href="https://app.policyengine.org/us/reports" target="_blank" rel="noopener noreferrer" style={{ color: colors.primary[600], textDecoration: "none" }}>PolicyEngine</a>
+            {aggregateImpacts?.policyengineUsVersion && (
+              <span style={{ marginLeft: spacing.sm }}>
+                · <a href="https://github.com/PolicyEngine/policyengine-us" target="_blank" rel="noopener noreferrer" style={{ color: colors.primary[600], textDecoration: "none" }}>-us:v{aggregateImpacts.policyengineUsVersion}</a>
+                {aggregateImpacts.datasetVersion && (
+                  <>{" "}<a href="https://github.com/PolicyEngine/policyengine-us-data" target="_blank" rel="noopener noreferrer" style={{ color: colors.primary[600], textDecoration: "none" }}>-us-data:v{aggregateImpacts.datasetVersion}</a></>
+                )}
+              </span>
+            )}
           </p>
           <a
             href="https://app.policyengine.org/us/reports"
