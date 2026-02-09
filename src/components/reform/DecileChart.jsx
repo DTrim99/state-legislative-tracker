@@ -17,28 +17,72 @@ export default function DecileChart({ decileData }) {
 
   // Get values as array
   const values = DECILE_LABELS.map((_, i) => data[String(i + 1)] || 0);
-  const maxValue = Math.max(...values.map(Math.abs));
+
+  // Calculate max positive and negative values
+  const maxPositive = Math.max(0, ...values);
+  const maxNegative = Math.min(0, ...values);
+  const hasNegative = maxNegative < 0;
+  const hasPositive = maxPositive > 0;
+
+  // Calculate total range and proportions
+  const totalRange = maxPositive - maxNegative;
+  const positiveRatio = totalRange > 0 ? maxPositive / totalRange : 0.5;
+  const negativeRatio = totalRange > 0 ? Math.abs(maxNegative) / totalRange : 0.5;
 
   const formatValue = (val) => {
     const sign = val >= 0 ? "+" : "-";
     return `${sign}$${Math.round(Math.abs(val)).toLocaleString()}`;
   };
 
+  // If all values are positive or all negative, use simpler layout
+  const allPositive = !hasNegative;
+  const allNegative = !hasPositive;
+
   return (
-    <div>
+    <div style={{ display: "flex", gap: spacing.sm }}>
+      {/* Y-axis title */}
+      <div style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        writingMode: "vertical-rl",
+        transform: "rotate(180deg)",
+        fontSize: typography.fontSize.xs,
+        fontFamily: typography.fontFamily.body,
+        color: colors.text.secondary,
+        fontWeight: typography.fontWeight.medium,
+        flexShrink: 0,
+      }}>
+        Average benefit
+      </div>
+
+      {/* Chart container */}
+      <div style={{ flex: 1 }}>
       {/* Chart */}
       <div style={{
         display: "flex",
-        alignItems: "flex-end",
         gap: "2px",
         height: "120px",
         padding: `0 ${spacing.xs}`,
         position: "relative",
       }}>
         {values.map((value, index) => {
-          const height = maxValue > 0 ? (Math.abs(value) / maxValue) * 100 : 0;
           const isPositive = value >= 0;
           const isHovered = hoveredIndex === index;
+
+          // Calculate bar height as percentage of its section
+          let barHeightPercent;
+          if (allPositive) {
+            barHeightPercent = maxPositive > 0 ? (value / maxPositive) * 100 : 0;
+          } else if (allNegative) {
+            barHeightPercent = maxNegative < 0 ? (Math.abs(value) / Math.abs(maxNegative)) * 100 : 0;
+          } else {
+            if (isPositive) {
+              barHeightPercent = maxPositive > 0 ? (value / maxPositive) * positiveRatio * 100 : 0;
+            } else {
+              barHeightPercent = maxNegative < 0 ? (Math.abs(value) / Math.abs(maxNegative)) * negativeRatio * 100 : 0;
+            }
+          }
 
           return (
             <div
@@ -47,8 +91,6 @@ export default function DecileChart({ decileData }) {
                 flex: 1,
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-end",
                 height: "100%",
                 position: "relative",
               }}
@@ -59,7 +101,8 @@ export default function DecileChart({ decileData }) {
               {isHovered && (
                 <div style={{
                   position: "absolute",
-                  bottom: `calc(${Math.max(height, 2)}% + 8px)`,
+                  top: allNegative ? "auto" : (isPositive || allPositive ? `calc(${(1 - positiveRatio) * 100}% - ${barHeightPercent}% - 40px)` : "auto"),
+                  bottom: allNegative ? `calc(${barHeightPercent}% + 8px)` : (!isPositive && !allPositive ? `calc(${negativeRatio * 100}% - ${barHeightPercent}% - 40px)` : "auto"),
                   left: "50%",
                   transform: "translateX(-50%)",
                   backgroundColor: colors.secondary[900],
@@ -81,34 +124,68 @@ export default function DecileChart({ decileData }) {
                       {formatValue(value)}
                     </div>
                   </div>
-                  {/* Tooltip arrow */}
-                  <div style={{
-                    position: "absolute",
-                    bottom: "-4px",
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                    width: 0,
-                    height: 0,
-                    borderLeft: "5px solid transparent",
-                    borderRight: "5px solid transparent",
-                    borderTop: `5px solid ${colors.secondary[900]}`,
-                  }} />
                 </div>
               )}
-              {/* Bar */}
-              <div
-                style={{
+
+              {/* Positive section (top) */}
+              {!allNegative && (
+                <div style={{
+                  flex: allPositive ? 1 : positiveRatio,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-end",
+                  alignItems: "stretch",
+                }}>
+                  {isPositive && (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: `${Math.max(barHeightPercent / (allPositive ? 1 : positiveRatio), 2)}%`,
+                        backgroundColor: isHovered ? colors.primary[600] : colors.primary[500],
+                        borderRadius: "2px 2px 0 0",
+                        transition: "background-color 0.15s ease",
+                        minHeight: "2px",
+                        cursor: "pointer",
+                      }}
+                    />
+                  )}
+                </div>
+              )}
+
+              {/* Zero line */}
+              {!allPositive && !allNegative && (
+                <div style={{
                   width: "100%",
-                  height: `${Math.max(height, 2)}%`,
-                  backgroundColor: isHovered
-                    ? (isPositive ? colors.primary[600] : colors.red[600])
-                    : (isPositive ? colors.primary[500] : colors.red[500]),
-                  borderRadius: "2px 2px 0 0",
-                  transition: "height 0.3s ease, background-color 0.15s ease",
-                  minHeight: "2px",
-                  cursor: "pointer",
-                }}
-              />
+                  height: "1px",
+                  backgroundColor: colors.gray[400],
+                  flexShrink: 0,
+                }} />
+              )}
+
+              {/* Negative section (bottom) */}
+              {!allPositive && (
+                <div style={{
+                  flex: allNegative ? 1 : negativeRatio,
+                  display: "flex",
+                  flexDirection: "column",
+                  justifyContent: "flex-start",
+                  alignItems: "stretch",
+                }}>
+                  {!isPositive && (
+                    <div
+                      style={{
+                        width: "100%",
+                        height: `${Math.max(barHeightPercent / (allNegative ? 1 : negativeRatio), 2)}%`,
+                        backgroundColor: isHovered ? colors.red[600] : colors.red[500],
+                        borderRadius: "0 0 2px 2px",
+                        transition: "background-color 0.15s ease",
+                        minHeight: "2px",
+                        cursor: "pointer",
+                      }}
+                    />
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -137,28 +214,17 @@ export default function DecileChart({ decileData }) {
         ))}
       </div>
 
-      {/* Legend */}
+      {/* X-axis title */}
       <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
+        textAlign: "center",
         marginTop: spacing.sm,
-        paddingTop: spacing.sm,
+        fontSize: typography.fontSize.xs,
+        fontFamily: typography.fontFamily.body,
+        color: colors.text.secondary,
+        fontWeight: typography.fontWeight.medium,
       }}>
-        <span style={{
-          fontSize: typography.fontSize.xs,
-          fontFamily: typography.fontFamily.body,
-          color: colors.text.tertiary,
-        }}>
-          ← Lower income
-        </span>
-        <span style={{
-          fontSize: typography.fontSize.xs,
-          fontFamily: typography.fontFamily.body,
-          color: colors.text.tertiary,
-        }}>
-          Higher income →
-        </span>
+        Income decile
+      </div>
       </div>
     </div>
   );

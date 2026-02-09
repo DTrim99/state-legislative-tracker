@@ -219,11 +219,9 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
                 </a>
               ))}
               {bills.map((bill, i) => (
-                <a
+                <div
                   key={i}
-                  href={bill.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={() => bill.reformConfig && setActiveBill(bill)}
                   style={{
                     display: "flex",
                     alignItems: "flex-start",
@@ -232,11 +230,21 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
                     backgroundColor: `${colors.primary[400]}15`,
                     border: `1px solid ${colors.primary[400]}30`,
                     borderRadius: spacing.radius.lg,
-                    textDecoration: "none",
-                    transition: "background-color 0.15s ease",
+                    cursor: bill.reformConfig ? "pointer" : "default",
+                    transition: "all 0.15s ease",
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = `${colors.primary[400]}25`}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = `${colors.primary[400]}15`}
+                  onMouseEnter={(e) => {
+                    if (bill.reformConfig) {
+                      e.currentTarget.style.backgroundColor = `${colors.primary[400]}25`;
+                      e.currentTarget.style.borderColor = colors.primary[400];
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (bill.reformConfig) {
+                      e.currentTarget.style.backgroundColor = `${colors.primary[400]}15`;
+                      e.currentTarget.style.borderColor = `${colors.primary[400]}30`;
+                    }
+                  }}
                 >
                   <div style={{
                     flexShrink: 0,
@@ -279,8 +287,8 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
                       </span>
                       {bill.description}
                     </p>
-                    <div style={{ display: "flex", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
-                      {bill.analysisUrl && (
+                    {bill.analysisUrl && (
+                      <div style={{ marginTop: spacing.sm }}>
                         <a
                           href={bill.analysisUrl}
                           target="_blank"
@@ -301,39 +309,27 @@ const StatePanel = memo(({ stateAbbr, onClose }) => {
                         >
                           View Analysis
                         </a>
-                      )}
-                      {bill.reformConfig && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setActiveBill(bill);
-                          }}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            gap: spacing.xs,
-                            padding: `2px ${spacing.sm}`,
-                            border: `1px solid ${colors.primary[600]}`,
-                            borderRadius: spacing.radius.sm,
-                            backgroundColor: colors.white,
-                            color: colors.primary[600],
-                            fontSize: typography.fontSize.xs,
-                            fontWeight: typography.fontWeight.medium,
-                            cursor: "pointer",
-                            transition: "background-color 0.15s ease",
-                          }}
-                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.primary[50]}
-                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.white}
-                        >
-                          <CalculatorIcon />
-                          Analyze Impact
-                        </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
-                  <LinkIcon />
-                </a>
+                  {bill.reformConfig && (
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: spacing.xs,
+                      padding: `${spacing.xs} ${spacing.sm}`,
+                      borderRadius: spacing.radius.md,
+                      backgroundColor: colors.primary[50],
+                      color: colors.primary[600],
+                      fontSize: typography.fontSize.xs,
+                      fontWeight: typography.fontWeight.medium,
+                      flexShrink: 0,
+                    }}>
+                      <CalculatorIcon />
+                      <span>View Analysis</span>
+                    </div>
+                  )}
+                </div>
               ))}
             </div>
           </div>
