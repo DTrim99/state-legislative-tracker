@@ -43,6 +43,10 @@ export function DataProvider({ children }) {
             inequality: item.inequality,
             districtImpacts: item.district_impacts,
             reformParams: item.reform_params,
+            provisions: item.provisions,
+            modelNotes: item.model_notes,
+            policyengineUsVersion: item.policyengine_us_version,
+            datasetVersion: item.dataset_version,
           };
         }
         setReformImpacts(impactsDict);

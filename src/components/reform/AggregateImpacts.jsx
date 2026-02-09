@@ -1,5 +1,6 @@
 import { colors, typography, spacing } from "../../designTokens";
 import DecileChart from "./DecileChart";
+import WinnersLosersChart from "./WinnersLosersChart";
 
 const formatCurrency = (value) => {
   if (value === null || value === undefined) return "N/A";
@@ -21,10 +22,10 @@ const formatPercent = (value, decimals = 1) => {
   return `${(value * 100).toFixed(decimals)}%`;
 };
 
-const formatChange = (value, decimals = 2) => {
+const formatPctChange = (value, decimals = 1) => {
   if (value === null || value === undefined) return "N/A";
   const sign = value > 0 ? "+" : "";
-  return `${sign}${(value * 100).toFixed(decimals)}pp`;
+  return `${sign}${value.toFixed(decimals)}%`;
 };
 
 export default function AggregateImpacts({ impacts }) {
@@ -56,11 +57,6 @@ export default function AggregateImpacts({ impacts }) {
   const stateIncomeTaxImpact = budgetaryImpact?.stateRevenueImpact ?? budgetaryImpact?.netCost;
   const isRevenueLoss = stateIncomeTaxImpact < 0;
   const householdsGain = isRevenueLoss; // Tax cut = households benefit
-
-  // Calculate total winners and losers
-  const totalGain = winnersLosers ? (winnersLosers.gainMore5Pct + winnersLosers.gainLess5Pct) : 0;
-  const totalLose = winnersLosers ? (winnersLosers.loseLess5Pct + winnersLosers.loseMore5Pct) : 0;
-  const noChange = winnersLosers?.noChange || 0;
 
   return (
     <div style={{
@@ -145,23 +141,14 @@ export default function AggregateImpacts({ impacts }) {
           }}>
             Poverty Rate
           </p>
-          <div style={{ display: "flex", alignItems: "baseline", gap: spacing.sm }}>
-            <span style={{
-              fontSize: typography.fontSize.xl,
-              fontWeight: typography.fontWeight.bold,
-              fontFamily: typography.fontFamily.primary,
-              color: colors.secondary[900],
-            }}>
-              {formatPercent(povertyImpact?.reformRate)}
-            </span>
-            <span style={{
-              fontSize: typography.fontSize.sm,
-              fontFamily: typography.fontFamily.body,
-              color: povertyImpact?.change < 0 ? colors.primary[600] : (povertyImpact?.change > 0 ? colors.red[600] : colors.text.tertiary),
-            }}>
-              {povertyImpact?.change !== 0 ? formatChange(povertyImpact?.change) : "no change"}
-            </span>
-          </div>
+          <span style={{
+            fontSize: typography.fontSize.xl,
+            fontWeight: typography.fontWeight.bold,
+            fontFamily: typography.fontFamily.primary,
+            color: povertyImpact?.percentChange < 0 ? colors.primary[600] : (povertyImpact?.percentChange > 0 ? colors.red[600] : colors.secondary[900]),
+          }}>
+            {povertyImpact?.percentChange !== 0 ? formatPctChange(povertyImpact?.percentChange) : "no change"}
+          </span>
         </div>
         <div style={{
           padding: spacing.lg,
@@ -176,108 +163,70 @@ export default function AggregateImpacts({ impacts }) {
           }}>
             Child Poverty Rate
           </p>
-          <div style={{ display: "flex", alignItems: "baseline", gap: spacing.sm }}>
-            <span style={{
-              fontSize: typography.fontSize.xl,
-              fontWeight: typography.fontWeight.bold,
-              fontFamily: typography.fontFamily.primary,
-              color: colors.secondary[900],
-            }}>
-              {formatPercent(childPovertyImpact?.reformRate)}
-            </span>
-            <span style={{
-              fontSize: typography.fontSize.sm,
-              fontFamily: typography.fontFamily.body,
-              color: childPovertyImpact?.change < 0 ? colors.primary[600] : (childPovertyImpact?.change > 0 ? colors.red[600] : colors.text.tertiary),
-            }}>
-              {childPovertyImpact?.change !== 0 ? formatChange(childPovertyImpact?.change) : "no change"}
-            </span>
-          </div>
+          <span style={{
+            fontSize: typography.fontSize.xl,
+            fontWeight: typography.fontWeight.bold,
+            fontFamily: typography.fontFamily.primary,
+            color: childPovertyImpact?.percentChange < 0 ? colors.primary[600] : (childPovertyImpact?.percentChange > 0 ? colors.red[600] : colors.secondary[900]),
+          }}>
+            {childPovertyImpact?.percentChange !== 0 ? formatPctChange(childPovertyImpact?.percentChange) : "no change"}
+          </span>
         </div>
       </div>
 
-      {/* Winners/Losers Bar */}
+      {/* Winners/Losers Chart */}
       {winnersLosers && (
-        <div style={{
-          padding: spacing.lg,
-          borderBottom: decileImpact ? `1px solid ${colors.border.light}` : "none",
-        }}>
+        <>
           <div style={{
-            display: "flex",
-            height: "8px",
-            borderRadius: "4px",
-            overflow: "hidden",
-            marginBottom: spacing.sm,
+            padding: `${spacing.md} ${spacing.xl}`,
+            borderBottom: `1px solid ${colors.border.light}`,
+            backgroundColor: colors.background.secondary,
           }}>
-            {totalGain > 0 && (
-              <div style={{
-                width: `${totalGain * 100}%`,
-                backgroundColor: colors.primary[500],
-              }} />
-            )}
-            {noChange > 0 && (
-              <div style={{
-                width: `${noChange * 100}%`,
-                backgroundColor: colors.gray[300],
-              }} />
-            )}
-            {totalLose > 0 && (
-              <div style={{
-                width: `${totalLose * 100}%`,
-                backgroundColor: colors.red[500],
-              }} />
-            )}
+            <h3 style={{
+              margin: 0,
+              fontSize: typography.fontSize.xs,
+              fontWeight: typography.fontWeight.semibold,
+              fontFamily: typography.fontFamily.body,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              color: colors.text.tertiary,
+            }}>
+              Winners and Losers
+            </h3>
           </div>
           <div style={{
-            display: "flex",
-            justifyContent: "center",
-            gap: spacing.lg,
-            fontSize: typography.fontSize.sm,
-            fontFamily: typography.fontFamily.body,
+            padding: spacing.xl,
+            borderBottom: decileImpact ? `1px solid ${colors.border.light}` : "none",
           }}>
-            <span>
-              <span style={{ color: colors.primary[600], fontWeight: typography.fontWeight.semibold }}>
-                {formatPercent(totalGain, 0)}
-              </span>
-              <span style={{ color: colors.text.tertiary }}> gain</span>
-            </span>
-            <span style={{ color: colors.text.tertiary }}>·</span>
-            <span>
-              <span style={{ color: colors.gray[600], fontWeight: typography.fontWeight.semibold }}>
-                {formatPercent(noChange, 0)}
-              </span>
-              <span style={{ color: colors.text.tertiary }}> neutral</span>
-            </span>
-            {totalLose > 0 && (
-              <>
-                <span style={{ color: colors.text.tertiary }}>·</span>
-                <span>
-                  <span style={{ color: colors.red[600], fontWeight: typography.fontWeight.semibold }}>
-                    {formatPercent(totalLose, 0)}
-                  </span>
-                  <span style={{ color: colors.text.tertiary }}> lose</span>
-                </span>
-              </>
-            )}
+            <WinnersLosersChart winnersLosers={winnersLosers} />
           </div>
-        </div>
+        </>
       )}
 
       {/* Decile Impact Chart */}
       {decileImpact && (
-        <div style={{ padding: spacing.lg }}>
-          <p style={{
-            margin: `0 0 ${spacing.md}`,
-            fontSize: typography.fontSize.xs,
-            fontFamily: typography.fontFamily.body,
-            color: colors.text.tertiary,
-            textTransform: "uppercase",
-            letterSpacing: "0.3px",
+        <>
+          <div style={{
+            padding: `${spacing.md} ${spacing.xl}`,
+            borderBottom: `1px solid ${colors.border.light}`,
+            backgroundColor: colors.background.secondary,
           }}>
-            Average Benefit by Income Decile
-          </p>
-          <DecileChart decileData={decileImpact} />
-        </div>
+            <h3 style={{
+              margin: 0,
+              fontSize: typography.fontSize.xs,
+              fontWeight: typography.fontWeight.semibold,
+              fontFamily: typography.fontFamily.body,
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+              color: colors.text.tertiary,
+            }}>
+              Average Benefit by Income Decile
+            </h3>
+          </div>
+          <div style={{ padding: spacing.xl }}>
+            <DecileChart decileData={decileImpact} />
+          </div>
+        </>
       )}
     </div>
   );

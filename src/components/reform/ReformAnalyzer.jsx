@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { colors, typography, spacing } from "../../designTokens";
 import { usePolicyEngineAPI } from "../../hooks/usePolicyEngineAPI";
@@ -8,6 +8,7 @@ import HouseholdForm from "./HouseholdForm";
 import ResultsDisplay from "./ResultsDisplay";
 import AggregateImpacts from "./AggregateImpacts";
 import DistrictMap from "./DistrictMap";
+import BillOverview from "./BillOverview";
 
 const CloseIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -30,6 +31,13 @@ const MapIcon = () => (
 const UserIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+  </svg>
+);
+
+const InfoIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="10" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 16v-4M12 8h.01" />
   </svg>
 );
 
@@ -68,18 +76,33 @@ const Spinner = () => (
 );
 
 const TABS = [
+  { id: "overview", label: "Overview", icon: InfoIcon },
   { id: "statewide", label: "Statewide", icon: ChartIcon },
   { id: "districts", label: "Districts", icon: MapIcon },
   { id: "household", label: "Your Household", icon: UserIcon },
 ];
 
-export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClose }) {
+export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, bill, onClose }) {
   const { compareReform, loading, error } = usePolicyEngineAPI();
   const { getImpact } = useData();
-  const [activeTab, setActiveTab] = useState("statewide");
+  const [activeTab, setActiveTab] = useState("overview");
 
   // Get pre-computed aggregate impacts
   const aggregateImpacts = getImpact(reformConfig.id);
+
+  // Pre-fetch district GeoJSON on modal open so it's ready when user clicks Districts tab
+  const [cachedGeoData, setCachedGeoData] = useState(null);
+  useEffect(() => {
+    const url = `https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_118th_Congressional_Districts/FeatureServer/0/query?where=${encodeURIComponent(`STATE_ABBR='${stateAbbr}'`)}&outFields=*&f=geojson`;
+    let cancelled = false;
+    fetch(url)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (!cancelled && data?.features?.length > 0) setCachedGeoData(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [stateAbbr]);
 
   const [householdInputs, setHouseholdInputs] = useState({
     headAge: 35,
@@ -159,30 +182,6 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClo
             }}>
               {reformConfig.label}
             </h2>
-            <p style={{
-              margin: `${spacing.xs} 0 0`,
-              fontSize: typography.fontSize.sm,
-              fontFamily: typography.fontFamily.body,
-              color: colors.text.secondary,
-            }}>
-              {reformConfig.description || "Analyze policy impact"}
-              {billUrl && (
-                <>
-                  {" · "}
-                  <a
-                    href={billUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      color: colors.primary[600],
-                      textDecoration: "none",
-                    }}
-                  >
-                    View bill →
-                  </a>
-                </>
-              )}
-            </p>
           </div>
           <button
             onClick={onClose}
@@ -247,6 +246,11 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClo
           overflowY: "auto",
           flex: 1,
         }}>
+          {/* Overview Tab */}
+          {activeTab === "overview" && (
+            <BillOverview bill={bill} impact={aggregateImpacts} />
+          )}
+
           {/* Statewide Tab */}
           {activeTab === "statewide" && (
             <AggregateImpacts impacts={aggregateImpacts} />
@@ -258,6 +262,7 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClo
               <DistrictMap
                 stateAbbr={stateAbbr}
                 reformId={reformConfig.id}
+                prefetchedGeoData={cachedGeoData}
               />
             </div>
           )}
@@ -378,6 +383,14 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, onClo
             color: colors.text.tertiary,
           }}>
             Powered by <a href="https://app.policyengine.org/us/reports" target="_blank" rel="noopener noreferrer" style={{ color: colors.primary[600], textDecoration: "none" }}>PolicyEngine</a>
+            {aggregateImpacts?.policyengineUsVersion && (
+              <span style={{ marginLeft: spacing.sm }}>
+                · <a href="https://github.com/PolicyEngine/policyengine-us" target="_blank" rel="noopener noreferrer" style={{ color: colors.primary[600], textDecoration: "none" }}>-us:v{aggregateImpacts.policyengineUsVersion}</a>
+                {aggregateImpacts.datasetVersion && (
+                  <>{" "}<a href="https://github.com/PolicyEngine/policyengine-us-data" target="_blank" rel="noopener noreferrer" style={{ color: colors.primary[600], textDecoration: "none" }}>-us-data:v{aggregateImpacts.datasetVersion}</a></>
+                )}
+              </span>
+            )}
           </p>
           <a
             href="https://app.policyengine.org/us/reports"

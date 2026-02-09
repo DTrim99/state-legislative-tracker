@@ -73,11 +73,14 @@ def format_winners_losers(
     better_off_pct: Optional[float] = None,
     worse_off_pct: Optional[float] = None,
     no_change_pct: Optional[float] = None,
+    # Per-decile breakdown (lists of 10 floats each)
+    decile_breakdown: Optional[dict] = None,
 ) -> dict:
     """
     Format winners/losers for the reform_impacts table.
 
     Can accept either detailed breakdown (5% threshold) or simple percentages.
+    Optionally includes per-decile breakdown for the stacked bar chart.
 
     Args:
         gain_more_5pct: Fraction gaining more than 5% income (0-1)
@@ -91,9 +94,14 @@ def format_winners_losers(
         worse_off_pct: Percentage worse off (0-100 scale)
         no_change_pct: Percentage unchanged (0-100 scale)
 
+        decile_breakdown: Dict with keys matching category names, each a list
+            of 10 floats (one per decile). If provided, output includes
+            per-decile data for the WinnersLosersChart.
+
     Returns:
-        Dict matching frontend AggregateImpacts.jsx expectations:
-        {gainMore5Pct, gainLess5Pct, noChange, loseLess5Pct, loseMore5Pct}
+        Dict with top-level aggregate fields plus optional intra_decile:
+        {gainMore5Pct, gainLess5Pct, noChange, loseLess5Pct, loseMore5Pct,
+         intraDecile?: {all: {...}, deciles: {1: {...}, ...}}}
     """
     # If simple format provided, convert to detailed format
     if better_off_pct is not None:
@@ -112,7 +120,7 @@ def format_winners_losers(
 
         no_change = no_change_frac
 
-    return {
+    result = {
         "gainMore5Pct": gain_more_5pct,
         "gainLess5Pct": gain_less_5pct,
         "noChange": no_change,
@@ -120,28 +128,51 @@ def format_winners_losers(
         "loseMore5Pct": lose_more_5pct,
     }
 
+    # Add per-decile breakdown if provided
+    if decile_breakdown is not None:
+        all_row = {
+            "gainMore5Pct": gain_more_5pct,
+            "gainLess5Pct": gain_less_5pct,
+            "noChange": no_change,
+            "loseLess5Pct": lose_less_5pct,
+            "loseMore5Pct": lose_more_5pct,
+        }
+        deciles = {}
+        for i in range(10):
+            deciles[str(i + 1)] = {
+                "gainMore5Pct": decile_breakdown["gain_more_5pct"][i],
+                "gainLess5Pct": decile_breakdown["gain_less_5pct"][i],
+                "noChange": decile_breakdown["no_change"][i],
+                "loseLess5Pct": decile_breakdown["lose_less_5pct"][i],
+                "loseMore5Pct": decile_breakdown["lose_more_5pct"][i],
+            }
+        result["intraDecile"] = {
+            "all": all_row,
+            "deciles": deciles,
+        }
 
-def format_decile_impact(decile_values: list) -> dict:
+    return result
+
+
+def format_decile_impact(relative: dict, average: dict) -> dict:
     """
     Format decile impact for the reform_impacts table.
 
+    Matches API decile_impact() output format:
+    - relative: weighted sum of change / weighted sum of baseline income (fractions)
+    - average: weighted sum of change / weighted count (dollar amounts)
+
     Args:
-        decile_values: List of 10 values (average $ benefit per decile)
+        relative: Dict of {decile_int: relative_change_fraction}
+        average: Dict of {decile_int: average_dollar_change}
 
     Returns:
-        Dict with relative and absolute impacts by decile string key.
-        Note: DecileChart.jsx checks 'relative' first, so we put values there.
+        Dict with 'relative' and 'average' keys, each mapping
+        string decile keys to values.
     """
-    if not decile_values or len(decile_values) != 10:
-        return {}
-
-    # DecileChart uses: const data = decileData.relative || decileData.absolute
-    # So we put values in 'relative' to ensure they display
-    values_dict = {str(i): decile_values[i-1] for i in range(1, 11)}
-
     return {
-        "relative": values_dict,  # Used by DecileChart for display
-        "absolute": values_dict,  # Same values, kept for compatibility
+        "relative": {str(k): v for k, v in relative.items()},
+        "average": {str(k): v for k, v in average.items()},
     }
 
 
@@ -152,7 +183,9 @@ def format_district_impact(
     households_affected: int,
     total_benefit: Optional[float] = None,
     winners_share: float = 0,
-    poverty_change: float = 0,
+    losers_share: float = 0,
+    poverty_pct_change: float = 0,
+    child_poverty_pct_change: float = 0,
 ) -> dict:
     """
     Format a single district impact.
@@ -164,7 +197,9 @@ def format_district_impact(
         households_affected: Number of households
         total_benefit: Total $ benefit (computed if not provided)
         winners_share: Fraction of households that benefit (0-1)
-        poverty_change: Change in poverty rate
+        losers_share: Fraction of households that lose (0-1)
+        poverty_pct_change: Relative % change in poverty rate
+        child_poverty_pct_change: Relative % change in child poverty rate
 
     Returns:
         Dict matching frontend DistrictMap.jsx expectations
@@ -178,7 +213,9 @@ def format_district_impact(
         "householdsAffected": round(households_affected, 0),
         "totalBenefit": round(total_benefit, 0),
         "winnersShare": round(winners_share, 2),
-        "povertyChange": poverty_change,
+        "losersShare": round(losers_share, 2),
+        "povertyPctChange": round(poverty_pct_change, 2),
+        "childPovertyPctChange": round(child_poverty_pct_change, 2),
     }
 
 
@@ -264,7 +301,10 @@ record = format_reform_impacts_record(
         worse_off_pct=2.97,
         no_change_pct=46.72,
     ),
-    decile_impact=format_decile_impact([1.85, 39.5, 76.06, 160.45, 276.01, 323.94, 447.23, 631.84, 807.12, 3393.84]),
+    decile_impact=format_decile_impact(
+        relative={1: 0.01, 2: 0.02, 3: 0.03, 4: 0.04, 5: 0.05, 6: 0.05, 7: 0.06, 8: 0.07, 9: 0.08, 10: 0.10},
+        average={1: 1.85, 2: 39.5, 3: 76.06, 4: 160.45, 5: 276.01, 6: 323.94, 7: 447.23, 8: 631.84, 9: 807.12, 10: 3393.84},
+    ),
     district_impacts={
         "SC-1": format_district_impact("SC-1", "Congressional District 1", 779, 271928, winners_share=0.62),
         # ... more districts
