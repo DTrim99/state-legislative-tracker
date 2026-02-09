@@ -178,6 +178,7 @@ export default function DecileChart({ decileData }) {
         display: "flex",
         gap: "2px",
         padding: `${spacing.xs} ${spacing.xs} 0`,
+        marginTop: spacing.sm,
         borderTop: `1px solid ${colors.border.light}`,
       }}>
         {DECILE_LABELS.map((label, index) => (
