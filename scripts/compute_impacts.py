@@ -311,11 +311,11 @@ def compute_winners_losers(baseline, reformed, state: str, year: int = 2026) -> 
     household_count_people = baseline.calculate("household_count_people", year).values
     household_income_decile = baseline.calculate("household_income_decile", year).values
 
-    # Compute relative income change
-    # Cap baseline at 1 to avoid division by zero (matching API)
+    # Compute relative income change (matching API compare.py exactly)
+    absolute_change = reform_income - baseline_income
     capped_baseline = np.maximum(baseline_income, 1)
-    income_change = reform_income - baseline_income
-    relative_change = income_change / capped_baseline
+    capped_reform = np.maximum(reform_income, 1) + absolute_change
+    relative_change = (capped_reform - capped_baseline) / capped_baseline
 
     # Assign to buckets
     gain_more_5pct = relative_change > GAIN_MORE_5PCT_THRESHOLD
