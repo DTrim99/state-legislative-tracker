@@ -10,6 +10,7 @@ import {
 import { geoCentroid } from "d3-geo";
 import { colors, typography, spacing } from "../../designTokens";
 import { useData } from "../../context/DataContext";
+import { track } from "../../lib/analytics";
 
 // ArcGIS REST API for 118th Congressional Districts
 const getCongressionalDistrictsUrl = (stateAbbr) =>
@@ -232,7 +233,11 @@ function UtahDistrictMap({ reformId }) {
                       cursor: "pointer",
                       transition: "fill 0.2s ease, stroke-width 0.2s ease",
                     }}
-                    onClick={() => setSelectedDistrict(selectedDistrict === districtId ? null : districtId)}
+                    onClick={() => {
+                      const next = selectedDistrict === districtId ? null : districtId;
+                      setSelectedDistrict(next);
+                      if (next) track("district_selected", { state_abbr: "UT", district_id: `UT-${districtId}` });
+                    }}
                   />
                   {/* District label */}
                   <text
@@ -1116,9 +1121,11 @@ function GenericStateDistrictMap({ stateAbbr, reformId, prefetchedGeoData }) {
                       <Geography
                         key={geo.rsmKey || info.districtId}
                         geography={geo}
-                        onClick={() => setSelectedDistrict(
-                          selectedDistrict === info.districtId ? null : info.districtId
-                        )}
+                        onClick={() => {
+                          const next = selectedDistrict === info.districtId ? null : info.districtId;
+                          setSelectedDistrict(next);
+                          if (next) track("district_selected", { state_abbr: stateAbbr, district_id: info.districtId });
+                        }}
                         style={{
                           default: {
                             fill: fillColor,
