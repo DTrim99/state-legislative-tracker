@@ -621,11 +621,8 @@ def get_effective_year_from_params(reform_params: dict) -> int:
 
 def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: dict, analysis_year: int):
     """Write impacts to Supabase reform_impacts table."""
-    # Include analysis_year in model_notes JSON since column doesn't exist yet
     model_notes = {
         "analysis_year": analysis_year,
-        "policyengine_us_version": get_changelog_version(str(_PE_US_REPO)),
-        "dataset_version": get_changelog_version(str(_PE_US_DATA_REPO)),
     }
 
     record = {
