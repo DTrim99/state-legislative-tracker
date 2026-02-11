@@ -163,9 +163,9 @@ export function useData() {
 }
 
 function extractBillNumber(id, title) {
-  // Match bill patterns like HB290, SB1507, H.3492 but exclude FY (fiscal year)
-  const titleMatch = title?.match(/\b(?!FY)([A-Z]{1,3}\.?\s*\d+)/i);
-  if (titleMatch) return titleMatch[1].replace(/\s+/g, '').replace('.', '').toUpperCase();
+  // Match bill patterns like HB290, SB1507, H.3492, HB210 S2 but exclude FY (fiscal year)
+  const titleMatch = title?.match(/\b(?!FY)([A-Z]{1,3}\.?\s*\d+(?:\s*S\d+)?)/i);
+  if (titleMatch) return titleMatch[1].replace(/\s+/g, ' ').replace('.', '').toUpperCase();
   // For budget proposals and items without bill numbers, use a clean version of the title
   if (title && !title.match(/\b[A-Z]{1,2}\d+\b/)) {
     // Extract first part before colon or parenthesis as the "bill" name
