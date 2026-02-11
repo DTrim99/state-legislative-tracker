@@ -619,28 +619,90 @@ def get_effective_year_from_params(reform_params: dict) -> int:
     return earliest_year if earliest_year < 2100 else 2026
 
 
-def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: dict, analysis_year: int):
-    """Write impacts to Supabase reform_impacts table."""
-    model_notes = {
-        "analysis_year": analysis_year,
-    }
+def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: dict, analysis_year: int, multi_year: bool = False):
+    """Write impacts to Supabase reform_impacts table.
 
-    record = {
-        "id": reform_id,
-        "computed": True,
-        "computed_at": impacts["computedAt"],
-        "budgetary_impact": impacts["budgetaryImpact"],
-        "poverty_impact": impacts["povertyImpact"],
-        "child_poverty_impact": impacts["childPovertyImpact"],
-        "winners_losers": impacts["winnersLosers"],
-        "decile_impact": impacts["decileImpact"],
-        "district_impacts": impacts.get("districtImpacts"),
-        "reform_params": reform_params,
-        "model_notes": model_notes,
-        "policyengine_us_version": get_changelog_version(str(_PE_US_REPO)),
-        "dataset_name": "policyengine-us-data",
-        "dataset_version": get_changelog_version(str(_PE_US_DATA_REPO)),
-    }
+    If multi_year=True, stores impacts in model_notes.impacts_by_year[year] instead of
+    overwriting the main impact fields. This allows storing multiple years of impacts.
+    """
+    if multi_year:
+        import json
+        # Fetch existing record to preserve other years' data
+        existing = supabase.table("reform_impacts").select("model_notes").eq("id", reform_id).execute()
+        existing_notes = {}
+        if existing.data and len(existing.data) > 0:
+            notes = existing.data[0].get("model_notes")
+            if isinstance(notes, dict):
+                existing_notes = notes
+            elif isinstance(notes, str):
+                # Parse if stored as string
+                try:
+                    existing_notes = json.loads(notes)
+                except json.JSONDecodeError:
+                    existing_notes = {}
+            elif notes is None:
+                existing_notes = {}
+
+        # Preserve existing impacts_by_year
+        impacts_by_year = existing_notes.get("impacts_by_year", {})
+
+        # Add this year's impacts
+        year_str = str(analysis_year)
+        impacts_by_year[year_str] = {
+            "budgetaryImpact": impacts["budgetaryImpact"],
+            "povertyImpact": impacts["povertyImpact"],
+            "childPovertyImpact": impacts["childPovertyImpact"],
+            "winnersLosers": impacts["winnersLosers"],
+            "decileImpact": impacts["decileImpact"],
+            "districtImpacts": impacts.get("districtImpacts"),
+            "computedAt": impacts["computedAt"],
+        }
+
+        # Merge model_notes
+        model_notes = {
+            **existing_notes,
+            "analysis_year": analysis_year,  # Most recent year computed
+            "impacts_by_year": impacts_by_year,
+        }
+
+        record = {
+            "id": reform_id,
+            "computed": True,
+            "computed_at": impacts["computedAt"],
+            # Use the latest year's impacts as the default display
+            "budgetary_impact": impacts["budgetaryImpact"],
+            "poverty_impact": impacts["povertyImpact"],
+            "child_poverty_impact": impacts["childPovertyImpact"],
+            "winners_losers": impacts["winnersLosers"],
+            "decile_impact": impacts["decileImpact"],
+            "district_impacts": impacts.get("districtImpacts"),
+            "reform_params": reform_params,
+            "model_notes": model_notes,
+            "policyengine_us_version": get_changelog_version(str(_PE_US_REPO)),
+            "dataset_name": "policyengine-us-data",
+            "dataset_version": get_changelog_version(str(_PE_US_DATA_REPO)),
+        }
+    else:
+        model_notes = {
+            "analysis_year": analysis_year,
+        }
+
+        record = {
+            "id": reform_id,
+            "computed": True,
+            "computed_at": impacts["computedAt"],
+            "budgetary_impact": impacts["budgetaryImpact"],
+            "poverty_impact": impacts["povertyImpact"],
+            "child_poverty_impact": impacts["childPovertyImpact"],
+            "winners_losers": impacts["winnersLosers"],
+            "decile_impact": impacts["decileImpact"],
+            "district_impacts": impacts.get("districtImpacts"),
+            "reform_params": reform_params,
+            "model_notes": model_notes,
+            "policyengine_us_version": get_changelog_version(str(_PE_US_REPO)),
+            "dataset_name": "policyengine-us-data",
+            "dataset_version": get_changelog_version(str(_PE_US_DATA_REPO)),
+        }
 
     result = supabase.table("reform_impacts").upsert(record).execute()
     return result
@@ -687,6 +749,11 @@ Examples:
         default=None,
         help="Simulation year (auto-detects from reform params if not specified)"
     )
+    parser.add_argument(
+        "--multi-year",
+        action="store_true",
+        help="Store impacts in impacts_by_year structure (for multi-year analysis)"
+    )
     args = parser.parse_args()
 
     # Require Supabase
@@ -726,10 +793,10 @@ Examples:
         reform_id = reform["id"]
         state = reform["state"]
 
-        print(f"\n{'─' * 60}")
+        print(f"\n{'-' * 60}")
         print(f"Reform: {reform['label']}")
         print(f"ID: {reform_id} | State: {state.upper()}")
-        print(f"{'─' * 60}")
+        print(f"{'-' * 60}")
 
         # Skip if already computed (unless forced)
         if not args.force and reform["computed"]:
@@ -756,7 +823,7 @@ Examples:
 
             print("  [3/6] Computing poverty impact...")
             poverty_impact = compute_poverty_impact(baseline, reformed, state, sim_year)
-            print(f"        Baseline: {poverty_impact['baselineRate']:.2%} → Reform: {poverty_impact['reformRate']:.2%}")
+            print(f"        Baseline: {poverty_impact['baselineRate']:.2%} -> Reform: {poverty_impact['reformRate']:.2%}")
 
             print("  [4/6] Computing child poverty impact...")
             child_poverty_impact = compute_poverty_impact(baseline, reformed, state, sim_year, child_only=True)
@@ -786,13 +853,13 @@ Examples:
 
             # Write to database
             print("  Writing to Supabase...")
-            write_to_supabase(supabase, reform_id, impacts, reform["reform"], sim_year)
+            write_to_supabase(supabase, reform_id, impacts, reform["reform"], sim_year, args.multi_year)
 
-            print(f"\n  ✓ Complete!")
+            print(f"\n  [OK] Complete!")
             results[reform_id] = "computed"
 
         except Exception as e:
-            print(f"  ✗ Error: {e}")
+            print(f"  [ERROR] {e}")
             import traceback
             traceback.print_exc()
             results[reform_id] = f"error: {e}"

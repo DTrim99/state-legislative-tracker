@@ -31,6 +31,29 @@ export function DataProvider({ children }) {
         // Convert impacts to dict with camelCase
         const impactsDict = {};
         for (const item of impactsResult.data || []) {
+          // Parse model_notes if it's a string (Supabase sometimes returns JSON as string)
+          let modelNotes = item.model_notes;
+          if (typeof modelNotes === 'string') {
+            try {
+              modelNotes = JSON.parse(modelNotes);
+            } catch (e) {
+              console.error('Failed to parse model_notes:', e);
+              modelNotes = {};
+            }
+          }
+          modelNotes = modelNotes || {};
+
+          // Parse provisions if it's a string
+          let provisions = item.provisions;
+          if (typeof provisions === 'string') {
+            try {
+              provisions = JSON.parse(provisions);
+            } catch (e) {
+              console.error('Failed to parse provisions:', e);
+              provisions = [];
+            }
+          }
+
           impactsDict[item.id] = {
             computed: item.computed,
             computedAt: item.computed_at,
@@ -43,9 +66,10 @@ export function DataProvider({ children }) {
             inequality: item.inequality,
             districtImpacts: item.district_impacts,
             reformParams: item.reform_params,
-            provisions: item.provisions,
-            modelNotes: item.model_notes,
-            analysisYear: item.model_notes?.analysis_year,
+            provisions: provisions,
+            modelNotes: modelNotes,
+            analysisYear: modelNotes?.analysis_year,
+            impactsByYear: modelNotes?.impacts_by_year,
             policyengineUsVersion: item.policyengine_us_version,
             datasetVersion: item.dataset_version,
           };
