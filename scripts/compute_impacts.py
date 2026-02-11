@@ -24,6 +24,13 @@ from pathlib import Path
 import numpy as np
 import yaml
 
+# Load environment variables from .env.local
+from dotenv import load_dotenv
+_script_dir = Path(__file__).parent
+_env_path = _script_dir.parent / '.env.local'
+if _env_path.exists():
+    load_dotenv(_env_path)
+
 # Import schema utilities for consistent data formatting
 from db_schema import (
     format_budgetary_impact,
@@ -152,14 +159,60 @@ def get_state_dataset(state: str) -> str:
     return dataset_path
 
 
+def get_builtin_reform(reform_name: str):
+    """Get a built-in reform class from policyengine-us by name."""
+    # Map of supported built-in reforms
+    builtin_reforms = {
+        "ut_hb210_s2": "policyengine_us.reforms.states.ut.ut_hb210_s2",
+        "ut_hb210": "policyengine_us.reforms.states.ut.ut_hb210",
+        "va_hb979": "policyengine_us.reforms.states.va.hb979.va_hb979_reform",
+    }
+
+    if reform_name not in builtin_reforms:
+        raise ValueError(f"Unknown built-in reform: {reform_name}")
+
+    module_path = builtin_reforms[reform_name]
+    import importlib
+    module = importlib.import_module(module_path)
+
+    # Get the reform class (usually named same as the reform or with _reform suffix)
+    if hasattr(module, reform_name):
+        return getattr(module, reform_name)
+    elif hasattr(module, f"create_{reform_name}"):
+        # Some reforms use a factory function
+        return getattr(module, f"create_{reform_name}")()
+    else:
+        raise ValueError(f"Could not find reform class in {module_path}")
+
+
 def create_reform_class(reform_params: dict):
-    """Create a PolicyEngine Reform class from parameter dict."""
+    """Create a PolicyEngine Reform class from parameter dict.
+
+    Special keys:
+    - _use_reform: Name of a built-in policyengine-us reform to apply
+    - _skip_params: List of parameter prefixes to skip (handled by built-in reform)
+    """
     import re
     from policyengine_core.reforms import Reform
     from policyengine_core.periods import instant
 
+    # Check for built-in reform
+    builtin_reform_name = reform_params.pop("_use_reform", None)
+    skip_prefixes = reform_params.pop("_skip_params", [])
+
+    # Filter out parameters that the built-in reform handles
+    filtered_params = {}
+    for param_path, values in reform_params.items():
+        should_skip = False
+        for prefix in skip_prefixes:
+            if param_path.startswith(prefix):
+                should_skip = True
+                break
+        if not should_skip:
+            filtered_params[param_path] = values
+
     def modify_params(params):
-        for param_path, values in reform_params.items():
+        for param_path, values in filtered_params.items():
             param = params
             # Split path and handle array indices like "brackets[0]"
             parts = param_path.split(".")
@@ -186,6 +239,31 @@ def create_reform_class(reform_params: dict):
                 )
         return params
 
+    # If using a built-in reform, combine it with parameter modifications
+    if builtin_reform_name:
+        builtin_reform = get_builtin_reform(builtin_reform_name)
+
+        class CombinedReform(Reform):
+            def apply(self):
+                # Apply the built-in reform first
+                # Note: policyengine-us may have already applied this via structural
+                # reforms if in_effect=true was set in parameters. We catch the
+                # VariableNameConflictError to handle this gracefully.
+                try:
+                    builtin_reform.apply(self)
+                except Exception as e:
+                    if "already defined" in str(e):
+                        # Variable already exists from structural reform - that's fine
+                        pass
+                    else:
+                        raise
+                # Then apply any additional parameter modifications
+                if filtered_params:
+                    self.modify_parameters(modify_params)
+
+        return CombinedReform
+
+    # Standard parameter-only reform
     class DynamicReform(Reform):
         def apply(self):
             self.modify_parameters(modify_params)
