@@ -1317,6 +1317,11 @@ function GenericStateDistrictMap({ stateAbbr, reformId, prefetchedGeoData, selec
     return Math.max(...Object.values(yearImpacts.districtImpacts).map(d => Math.abs(d?.avgBenefit || 0)), 1);
   }, [hasDistrictData, yearImpacts]);
 
+  const allDistrictValues = useMemo(() => {
+    if (!hasDistrictData) return [];
+    return Object.values(yearImpacts.districtImpacts).map(d => d?.avgBenefit || 0);
+  }, [hasDistrictData, yearImpacts]);
+
   if (loading) {
     return (
       <div style={{
@@ -1354,10 +1359,6 @@ function GenericStateDistrictMap({ stateAbbr, reformId, prefetchedGeoData, selec
     return yearImpacts.districtImpacts[districtId]?.avgBenefit || 0;
   };
 
-  const allDistrictValues = useMemo(() => {
-    if (!hasDistrictData) return [];
-    return Object.values(yearImpacts.districtImpacts).map(d => d?.avgBenefit || 0);
-  }, [hasDistrictData, yearImpacts]);
   const allPositive = allDistrictValues.every(v => v >= 0);
   const allNegative = allDistrictValues.every(v => v <= 0);
 
