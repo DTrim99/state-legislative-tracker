@@ -58,13 +58,23 @@ From each source, extract:
 - Key assumptions
 - Methodology notes
 
-### Step 4: Back-of-Envelope Check
+### Step 4: Back-of-Envelope Check — REQUIRED
 
-Do quick sanity math:
+**Always** compute a rough sanity check, even when a fiscal note exists. This provides an independent validation point.
+
 - If tax rate cut: `rate_change × tax_base ≈ revenue_impact`
 - If credit expansion: `new_beneficiaries × avg_credit ≈ cost`
+- If threshold change: `affected_taxpayers × avg_change_in_liability ≈ cost`
+
+Show the full arithmetic chain so a reviewer can follow the logic. Example:
+> Rate change: 4.85% → 4.45% = 0.40pp reduction
+> Utah PIT base ≈ $16.7B → 0.004 × $16.7B = **-$66.8M**
+
+If no fiscal note exists, the back-of-envelope check becomes the primary external validation — be especially thorough.
 
 ## Output Format
+
+**URL fields are REQUIRED.** Every source must include a clickable URL so PR reviewers can verify the data. If you cannot find a dedicated fiscal note PDF, use the bill page URL that hosts/links to the fiscal note.
 
 ```json
 {
@@ -87,9 +97,9 @@ Do quick sanity math:
     }
   ],
   "back_of_envelope": {
-    "calculation": "4.5% - 4.45% = 0.05% reduction × $16.7B tax base = $83.5M",
-    "result": -83500000,
-    "notes": "Matches fiscal note closely"
+    "calculation": "Rate change: 4.85% → 4.45% = 0.40pp reduction\nUtah PIT base ≈ $16.7B → 0.004 × $16.7B = -$66.8M",
+    "result": -66800000,
+    "notes": "Rough estimate — actual varies due to deductions and credits"
   },
   "consensus_range": {
     "low": -80000000,
@@ -98,6 +108,21 @@ Do quick sanity math:
   }
 }
 ```
+
+### When no fiscal note exists
+
+If no fiscal note is available, set `fiscal_note` to `null` and rely more heavily on the back-of-envelope calculation and external analyses:
+
+```json
+{
+  "fiscal_note": null,
+  "external_analyses": [...],
+  "back_of_envelope": { ... },
+  "consensus_range": { ... }
+}
+```
+
+In this case, the back-of-envelope check becomes the primary validation point — be especially thorough with the arithmetic.
 
 ## Validation Thresholds
 

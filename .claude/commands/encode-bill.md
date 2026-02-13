@@ -199,6 +199,8 @@ The agent will return:
 }
 ```
 
+**IMPORTANT**: Every provision must include a `parameter` field (single PE parameter path) or `parameters` array (for grouped provisions). See `.claude/agents/model-describer.md` for details.
+
 ## Checkpoint #1: User Review
 
 Present the mapping AND model description for approval:
@@ -255,6 +257,8 @@ import os
 supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
 
 # 1. Upsert research record
+# key_findings format: always include source URL so PR builder can parse into validation table
+# Format each finding as: "{source}: {estimate} — {url}"
 research = {
     "id": "{state}-{bill}".lower(),
     "state": "{STATE}",
@@ -263,7 +267,11 @@ research = {
     "title": "{BILL_TITLE}",
     "description": "{DESCRIPTION}",
     "url": "{BILL_URL}",
-    "key_findings": ["{provision_1}", "{provision_2}"],
+    "key_findings": [
+        "Fiscal note ({source}): {estimate} — {fiscal_note_url}",
+        "{external_source}: {estimate} — {external_url}",
+        "Back-of-envelope: {calculation_summary} = {result}"
+    ],
 }
 supabase.table("research").upsert(research).execute()
 
@@ -395,14 +403,39 @@ Merging this PR will publish the bill to the dashboard.
 ---
 
 ### What we model
-| Provision | Current | Proposed |
-|-----------|---------|----------|
-(from reform_impacts.provisions)
+| Provision | Parameter | Current | Proposed |
+|-----------|-----------|---------|----------|
+| Utah Income Tax Rate | `gov.states.ut.tax.income.rate` | 4.85% | 4.45% |
+(Each row maps to a provision from reform_impacts.provisions — include provision.parameter or provision.parameters[0]. For grouped provisions with multiple parameters, list the primary parameter and note others in the row or use multiple rows.)
 
-### Fiscal estimates (external)
-- {key_findings[0]}
-- {key_findings[1]}
-(from research.key_findings)
+### Validation
+
+#### External estimates
+| Source | Estimate | Period | Link |
+|--------|----------|--------|------|
+| Utah Legislative Fiscal Analyst | -$83.6M | Annual | [Fiscal Note](url) |
+| Tax Foundation | -$80.0M | Annual | [Analysis](url) |
+(From fiscal-finder output stored in research.key_findings. Parse each finding's URL into a clickable link. If no fiscal note exists, note "No fiscal note available".)
+
+#### Back-of-envelope check
+> Rate change: 4.85% → 4.45% = 0.40pp reduction
+> Utah PIT base ≈ $16.7B → 0.004 × $16.7B = **-$66.8M**
+> (Rough estimate — actual varies due to deductions and credits)
+
+(From fiscal-finder back_of_envelope data stored in key_findings. Always include when available. Especially important when no fiscal note exists.)
+
+#### PE vs External comparison
+| Source | Estimate | vs PE | Difference |
+|--------|----------|-------|------------|
+| PE (PolicyEngine) | **-$68.6M** | — | — |
+| Fiscal note | -$83.6M | -17.9% | Acceptable |
+| Tax Foundation | -$80.0M | -14.3% | Acceptable |
+| Back-of-envelope | -$66.8M | +2.7% | Excellent |
+
+**Verdict**: PE estimate is within acceptable range (10-25%) of official fiscal note.
+Difference likely due to: [agent explains — e.g., PE uses CPS microdata vs state tax return data]
+
+(Compute % difference as: (PE - source) / source × 100. Thresholds: <10% Excellent, 10-25% Acceptable, 25-50% Review needed, >50% Likely error. Always include a 1-sentence explanation of likely discrepancy sources.)
 
 ### Parameter changes
 | Parameter | Period | Value |
@@ -448,7 +481,7 @@ Merging this PR will publish the bill to the dashboard.
 
 Below the template sections, add any context from the research phases that is NOT in the DB:
 
-- **Fiscal estimate comparison**: PE estimate vs fiscal note, percentage difference, explanation of discrepancy
+- **Discrepancy explanation** (in the Validation → PE vs External Verdict): Explain *why* PE differs from the fiscal note — e.g., PE uses CPS microdata vs state tax return data, dynamic vs static scoring, different base year
 - **Data quality caveats**: e.g., CPS top-coding for ultra-high earners, small sample sizes for specific districts
 - **Modeling notes**: what's included/excluded from the model vs the actual bill
 

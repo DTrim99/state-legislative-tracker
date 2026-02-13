@@ -45,6 +45,7 @@ ALL text (descriptions, explanations, labels) MUST follow these rules:
 Single-parameter provision:
 ```json
 {
+  "parameter": "gov.states.ut.tax.income.rate",
   "label": "Utah Income Tax Rate",
   "baseline": "4.5%",
   "reform": "4.45%",
@@ -52,9 +53,13 @@ Single-parameter provision:
 }
 ```
 
-Grouped multi-parameter provision (use `changes` array):
+Grouped multi-parameter provision (use `changes` array + `parameters` array):
 ```json
 {
+  "parameters": [
+    "gov.states.ut.tax.income.credits.ctc.reduction.start.SINGLE",
+    "gov.states.ut.tax.income.credits.ctc.reduction.start.HEAD_OF_HOUSEHOLD"
+  ],
   "label": "Child Tax Credit Phase-out Thresholds",
   "baseline": "$43,000",
   "reform": "$27,000",
@@ -65,6 +70,12 @@ Grouped multi-parameter provision (use `changes` array):
   ]
 }
 ```
+
+**REQUIRED**: Every provision MUST include either:
+- `parameter`: Full PE parameter path (for single-parameter provisions)
+- `parameters`: Array of full PE parameter paths (for grouped provisions)
+
+This enables the PR template to show exact parameter paths alongside human-readable labels for verification.
 
 ### Grouping Rules
 
@@ -153,6 +164,10 @@ Reform JSON: {
   "description": "Utah HB210 adjusts income tax credit thresholds for single and head-of-household filers to equal half the joint filer threshold, and restructures the state earned income tax credit.",
   "provisions": [
     {
+      "parameters": [
+        "gov.states.ut.tax.income.credits.earned_income.rate",
+        "gov.contrib.states.ut.hb210.in_effect"
+      ],
       "label": "Earned Income Tax Credit",
       "baseline": "20% of federal EITC",
       "reform": "0% (replaced by HB210 module)",
@@ -163,6 +178,10 @@ Reform JSON: {
       ]
     },
     {
+      "parameters": [
+        "gov.states.ut.tax.income.credits.ctc.reduction.start.SINGLE",
+        "gov.states.ut.tax.income.credits.ctc.reduction.start.HEAD_OF_HOUSEHOLD"
+      ],
       "label": "Child Tax Credit Phase-out Thresholds",
       "baseline": "$43,000",
       "reform": "$27,000",
