@@ -634,9 +634,6 @@ def run_search_scan(supabase, states, queries, dry_run):
 
         if not is_relevant_bill(bill):
             skipped_irrelevant += 1
-            skipped_bills.append((bill, matched_query, "not_relevant"))
-            if not dry_run:
-                save_processed_bill(supabase, bill, matched_query, skipped_reason="not_relevant")
             continue
 
         new_bills.append((bill, matched_query))
@@ -729,9 +726,6 @@ def run_dataset_scan(supabase, states, dry_run):
 
                 if not is_relevant_bill(bill):
                     skipped_irrelevant += 1
-                    skipped_bills.append((bill, "dataset_scan", "not_relevant"))
-                    if not dry_run:
-                        save_processed_bill(supabase, bill, "dataset_scan", skipped_reason="not_relevant")
                     continue
 
                 new_bills.append((bill, "dataset_scan"))
