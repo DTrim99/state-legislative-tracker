@@ -436,6 +436,11 @@ def is_relevant_bill(bill):
         "emergency power", "generator",
         "fire and emergency",
         "rural development", "disclosure and posting",
+        # Disaster-specific / event-specific exclusions (not general tax policy)
+        "wildfire", "wildland fire", "bobcat fire", "fire exclusion",
+        "landfill event", "disaster relief", "disaster exclusion",
+        # Trust taxation (not individual)
+        "nongrantor trust", "grantor trust",
         # Climate/environment
         "climate", "environmental conservation", "environmental",
         # Real estate
