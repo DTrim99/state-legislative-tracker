@@ -464,6 +464,9 @@ def is_relevant_bill(bill):
         "psychiatry", "psychiatric", "mental health services",
         "theft loss", "casualty loss",
         "premarital counseling", "stillbirth",
+        # Niche credits/deductions (out of scope)
+        "conservation contribution", "conservation credit",
+        "long-term care insurance", "long-term care tax credit",
         # Administrative/procedural
         "check-off box", "surcharge",
         "signage", "food distributor",

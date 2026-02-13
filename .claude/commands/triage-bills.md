@@ -88,6 +88,9 @@ For each bill, **propose** 3 things but DO NOT write to Supabase yet:
    - Occupation-specific deductions/credits (e.g., psychiatry income deduction, teacher supply credit)
    - Theft/casualty loss deductions
    - Premarital counseling or other behavior-specific credits
+   - Niche credits: conservation contributions, long-term care insurance premiums
+   - Disaster/event-specific exclusions (wildfire, landfill, named disasters)
+   - Trust taxation (nongrantor trusts, etc.)
    - Purely administrative or reporting requirements
 
    **Key distinction — parametric vs structural:**
