@@ -455,6 +455,10 @@ def is_relevant_bill(bill):
         "long-term health", "landowner",
         "not-for-profit", "food service establishment",
         "child support",
+        # Occupation-specific / behavior-specific (out of scope)
+        "psychiatry", "psychiatric", "mental health services",
+        "theft loss", "casualty loss",
+        "premarital counseling", "stillbirth",
         # Administrative/procedural
         "check-off box", "surcharge",
         "signage", "food distributor",

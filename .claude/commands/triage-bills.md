@@ -79,10 +79,27 @@ If this fails (timeout, API down), proceed using your built-in PolicyEngine know
 For each bill, **propose** 3 things but DO NOT write to Supabase yet:
 
 1. **`score`** (0-100) using this rubric:
-   - **80-100**: Directly parametric — bill changes a value that maps to an existing PE parameter (e.g., income tax rate cut, EITC match percentage change, standard deduction increase)
-   - **50-79**: Likely modelable but may need parameter additions or minor code changes (e.g., new credit with simple formula, threshold changes to existing programs)
+   - **80-100**: Directly parametric — bill changes an **existing** parameter value only (e.g., income tax rate cut, EITC match percentage change, standard deduction increase). The parameter must already exist with the same structure.
+   - **50-79**: Likely modelable but needs parameter additions or minor code changes (e.g., new credit with simple formula, threshold changes to existing programs)
    - **20-49**: Structural change — needs new code in policyengine-us (e.g., entirely new program, complex eligibility rules)
    - **0-19**: Not modelable in PolicyEngine (e.g., purely administrative, procedural, enforcement)
+
+   **Auto-skip (score 5, not_modelable)** — these bill types are out of scope regardless of modelability:
+   - Occupation-specific deductions/credits (e.g., psychiatry income deduction, teacher supply credit)
+   - Theft/casualty loss deductions
+   - Premarital counseling or other behavior-specific credits
+   - Purely administrative or reporting requirements
+
+   **Key distinction — parametric vs structural:**
+   - **Parametric (80-100)**: ONLY changing the *value* of parameters that already exist. Examples: changing a tax rate from 5% to 4%, changing a threshold from $10K to $15K, changing a credit percentage from 33% to 45%.
+   - **Structural (50-79)**: Anything that changes the *structure* of the tax/benefit system, even if it involves parameters. Examples:
+     - **Adding or removing tax brackets** (even though brackets are parameters, adding new ones requires new parameter entries)
+     - **Creating new credits or programs** that don't exist yet
+     - **Adding age-gated or status-gated variants** of existing provisions
+     - **Restructuring bracket thresholds** in a way that changes the number of brackets
+     - **Combining or splitting filing status treatments**
+
+   When in doubt: if the bill says "new bracket", "additional bracket", "restructure", or implies the number of parameter entries changes, it is **structural** (50-79), not parametric.
 
 2. **`reform_type`**: `parametric` | `structural` | `unknown`
 
@@ -92,6 +109,7 @@ Use your knowledge of PolicyEngine's parameter structure. For each bill, conside
 - Does the bill title/description mention a specific tax rate, credit, deduction, or exemption?
 - Is there an existing PE parameter for this state that maps to it?
 - Would encoding this bill require only a parameter value change, or new variables/formulas?
+- Does the bill **add or remove** brackets/tiers/categories, or just **change values** within the existing structure?
 
 ### Step 5: Present Proposals for Human Review
 
