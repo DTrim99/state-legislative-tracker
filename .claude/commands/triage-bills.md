@@ -1,6 +1,6 @@
 # Triage Bills
 
-Score unscored bills in Supabase and create a GitHub issue for human review.
+Score unscored bills and create/update per-state GitHub issues for human review.
 
 ## Arguments
 - `$ARGUMENTS` - Optional: state filter (e.g., "GA") or "--limit 20"
@@ -28,7 +28,7 @@ encoded_ids = {r["legiscan_bill_id"] for r in encoded.data}
 
 # Get unscored, non-skipped bills
 query = supabase.table("processed_bills") \
-    .select("bill_id, state, bill_number, title, description, legiscan_url") \
+    .select("bill_id, state, bill_number, title, description, status, last_action, last_action_date, legiscan_url, matched_query") \
     .eq("confidence_score", 0) \
     .is_("skipped_reason", "null")
 
@@ -95,12 +95,14 @@ Use your knowledge of PolicyEngine's parameter structure. For each bill, conside
 
 ### Step 5: Present Proposals for Human Review
 
-Display ALL proposed scores in a table for the user to review:
+Display ALL proposed scores in a table for the user to review, **grouped by state**:
 
 ```
 ═══════════════════════════════════════════════════════════════════════════
 PROPOSED SCORES — {N} bills (review before saving)
 ═══════════════════════════════════════════════════════════════════════════
+
+### GA (5 bills)
 
 | # | Bill       | Score | Type       | Reasoning                         | Link           |
 |---|------------|-------|------------|-----------------------------------|----------------|
@@ -119,11 +121,9 @@ Then use `AskUserQuestion` to get approval:
 
 If the user wants to adjust, apply their changes before writing.
 
-### Step 6: Write Approved Scores to Supabase + Create GitHub Issue
+### Step 6: Write Approved Scores to Supabase
 
-**Only after user approval**, do two things:
-
-#### 6a. Write scores to Supabase
+**Only after user approval**, write scores to Supabase:
 
 ```bash
 export $(grep -v '^#' .env | xargs) && python3 << 'PYEOF'
@@ -153,80 +153,125 @@ Score threshold:
 - **score >= 20**: keep in the pipeline
 - **score < 20**: set `skipped_reason = 'not_modelable'` (permanently filtered out)
 
-#### 6b. Create GitHub Issue with scored results
+### Step 7: Create or Update Per-State GitHub Issues
 
-Create a GitHub issue that serves as the **human review surface**. The issue should contain all the information needed to decide which bills to encode.
+For **each state** that has scored bills, find or create a GitHub issue titled `[{STATE}] Bill Triage`. This is a **living document** that gets updated each time `/triage-bills` runs.
+
+#### 7a. Check for existing state issue
 
 ```bash
-gh issue create \
-  --repo PolicyEngine/state-legislative-tracker \
-  --title "Bill Triage: {N} bills scored ({date})" \
-  --label "bill-triage" \
-  --body "$(cat <<'EOF'
-## Bill Triage Results
+gh issue list --repo PolicyEngine/state-legislative-tracker --label "bill-triage" --search "[GA] Bill Triage" --state open --json number,title
+```
 
-Scored {N} bills for PolicyEngine modelability on {date}.
+#### 7b. Build issue body
+
+The issue body should contain ALL scored bills for that state (not just newly scored — fetch all scored, non-skipped bills for the state from Supabase). This ensures the issue is always a complete picture.
+
+```bash
+export $(grep -v '^#' .env | xargs) && python3 << 'PYEOF'
+import os, json
+from supabase import create_client
+
+supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_KEY"])
+
+# Get ALL scored, non-skipped bills for this state
+result = supabase.table("processed_bills") \
+    .select("bill_id, state, bill_number, title, status, last_action, last_action_date, legiscan_url, matched_query, confidence_score, reform_type, scoring_reasoning") \
+    .eq("state", "GA") \
+    .gt("confidence_score", 0) \
+    .is_("skipped_reason", "null") \
+    .order("confidence_score", desc=True) \
+    .execute()
+
+print(json.dumps(result.data, indent=2))
+PYEOF
+```
+
+Format the issue body like this:
+
+```markdown
+## GA Bill Triage
+
+Tracked bills for Georgia, scored for PolicyEngine modelability.
+Last updated: {date}
 
 ### Ready to Encode (score 80-100)
 
-These bills map directly to existing PolicyEngine parameters:
+| Bill | Score | Type | Title | Last Action | Link | Encode |
+|------|-------|------|-------|-------------|------|--------|
+| HB1001 | 95 | parametric | Reduce rate of income tax | Introduced 2026-02-10 | [LegiScan](url) | `/encode-bill GA HB1001` |
+| SB476 | 95 | parametric | Income Tax Reduction Act of 2026 | Introduced 2026-02-11 | [LegiScan](url) | `/encode-bill GA SB476` |
 
-| Bill | Score | Type | Description | Link |
-|------|-------|------|-------------|------|
-| GA HB1001 | 95 | parametric | Reduces flat income tax rate | [LegiScan](url) |
+### May Need Work (score 50-79)
 
-**To encode:** Run `/encode-bill GA HB1001` in Claude Code.
-
-### May Need Parameter Additions (score 50-79)
-
-| Bill | Score | Type | Description | Link |
-|------|-------|------|-------------|------|
-| GA SB474 | 65 | structural | Overtime tax exclusion | [LegiScan](url) |
+| Bill | Score | Type | Title | Last Action | Link |
+|------|-------|------|-------|-------------|------|
+| SB474 | 65 | structural | Exclude overtime from taxation | Introduced 2026-02-11 | [LegiScan](url) |
 
 ### Needs Review (score 20-49)
 
-| Bill | Score | Type | Description | Link |
-|------|-------|------|-------------|------|
-
-### Skipped as Not Modelable (score < 20)
-
-| Bill | Score | Reason |
-|------|-------|--------|
-| GA SB448 | 5 | Senior facility power requirements |
+| Bill | Score | Type | Title | Last Action | Link |
+|------|-------|------|-------|-------------|------|
 
 ---
+*Auto-generated by `/triage-bills`. Run `/encode-bill GA {BILL}` to compute impacts.*
+*Last updated: {date}*
+```
 
-*Generated by `/triage-bills`. Bills marked not_modelable are permanently filtered from future triage runs.*
+Key formatting rules:
+- Sort by score descending within each tier
+- Include last action + date (helps prioritize active vs stalled bills)
+- Include the `/encode-bill` command for high-confidence bills (copy-pasteable)
+- Include the LegiScan URL as a clickable link
+- Include title (truncated to 80 chars if needed)
+
+#### 7c. Create or update the issue
+
+If no existing issue found for this state:
+```bash
+gh issue create \
+  --repo PolicyEngine/state-legislative-tracker \
+  --title "[GA] Bill Triage" \
+  --label "bill-triage" \
+  --body "{BODY}"
+```
+
+If an existing issue exists, update it:
+```bash
+gh issue edit {ISSUE_NUMBER} \
+  --repo PolicyEngine/state-legislative-tracker \
+  --body "{BODY}"
+```
+
+**IMPORTANT**: Always use a HEREDOC for the body to handle special characters:
+```bash
+gh issue create --repo PolicyEngine/state-legislative-tracker --title "[GA] Bill Triage" --label "bill-triage" --body "$(cat <<'EOF'
+{BODY_CONTENT}
 EOF
 )"
 ```
 
-Adjust the table contents based on the actual scored bills. Include ALL bills in their appropriate tier. Each bill row should have the LegiScan URL as a clickable link.
-
-### Step 7: Show Summary
-
-After writing scores and creating the issue, display:
+### Step 8: Show Summary
 
 ```
 ═══════════════════════════════════════════════════════════════════════════
-TRIAGE COMPLETE: {N} bills scored
+TRIAGE COMPLETE: {N} bills scored across {S} states
 ═══════════════════════════════════════════════════════════════════════════
 
-GitHub Issue: {ISSUE_URL}
+GitHub Issues:
+  [GA] Bill Triage: {URL}  (X high, Y medium, Z low)
+  [NY] Bill Triage: {URL}  (X high, Y medium, Z low)
 
-  {X} ready to encode (80-100)
-  {Y} may need param additions (50-79)
-  {Z} needs review (20-49)
-  {W} skipped as not_modelable
+  {W} bills skipped as not_modelable
 
-Review the issue and run /encode-bill for bills you want to model.
+Run /encode-bill for bills you want to model.
 ═══════════════════════════════════════════════════════════════════════════
 ```
 
 ## Example Usage
 
 ```
-/triage-bills           # Score all unscored bills
-/triage-bills GA        # Score only Georgia bills
+/triage-bills           # Score all unscored bills, update all state issues
+/triage-bills GA        # Score only Georgia bills, update GA issue
 /triage-bills --limit 5 # Score up to 5 bills
 ```
