@@ -23,10 +23,13 @@ ALL text (descriptions, explanations, labels) MUST follow these rules:
 - **Facts only**: State what changes mechanically — specific values, thresholds, rates
 - **No adjectives or judgments**: Never use words like "significant", "modest", "key", "important"
 - **No predictions**: Never say who benefits, how much they benefit, or what the effect will be
-- **No editorial language**: Never use "providing", "benefiting", "relief", "burden", "equitably", "improving"
+- **No editorial language**: Never use "providing", "benefiting", "relief", "burden", "equitably", "improving", "support", "helping", "boosting"
+- **No characterizations of affected populations**: Never say "low-income families", "working families", "low-to-moderate income". Instead reference the mechanical eligibility criteria (e.g., "filers within the federal EITC eligibility range")
 - **No comparative statements**: Never say "one of the smallest", "among the largest", etc.
 - **No author attribution**: Never include "Authored by..." or sponsor information
 - **Be verbose about mechanics**: List every specific parameter change with exact values
+
+**Self-check**: Before returning, re-read every `explanation` field. If any sentence could appear in a press release or advocacy document, rewrite it to be purely mechanical.
 
 ## Output Format
 
