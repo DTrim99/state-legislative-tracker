@@ -56,6 +56,15 @@ Identify which PolicyEngine programs are affected:
 - **Exemptions**: personal exemption, dependent exemption
 - **Deductions**: standard deduction, itemized caps
 
+### Step 5: Record Bill Section References
+
+For each provision, record the **exact bill section** that mandates the change. This enables reviewers to trace each parameter change back to the legislative text.
+
+- Use the format: `"Section X, amending §Y-Z"` or `"§Y-Z(subsection)"`
+- If the bill uses line numbers instead of sections, use: `"Lines 15-22"`
+- If the bill adds a new subsection, note it: `"Section 3, new §59-10-104(2)(f)"`
+- Every provision **must** include a `bill_section` field
+
 ## Output Format
 
 Return a structured summary:
@@ -78,7 +87,8 @@ Return a structured summary:
       "change_type": "rate_reduction",
       "current_value": 0.045,
       "new_value": 0.0445,
-      "affected_parameter": "gov.states.ut.tax.income.rate"
+      "affected_parameter": "gov.states.ut.tax.income.rate",
+      "bill_section": "Section 2, amending §59-10-104(2)(a)"
     }
   ],
   "fiscal_note_url": "https://le.utah.gov/~2026/fiscalnotes/SB0060.pdf",

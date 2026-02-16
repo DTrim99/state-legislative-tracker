@@ -199,7 +199,7 @@ The agent will return:
 }
 ```
 
-**IMPORTANT**: Every provision must include a `parameter` field (single PE parameter path) or `parameters` array (for grouped provisions). See `.claude/agents/model-describer.md` for details.
+**IMPORTANT**: Every provision must include a `parameter` field (single PE parameter path) or `parameters` array (for grouped provisions), and a `bill_section` field (carried through from bill-researcher output). See `.claude/agents/model-describer.md` for details.
 
 ## Checkpoint #1: User Review
 
@@ -438,9 +438,9 @@ Difference likely due to: [agent explains — e.g., PE uses CPS microdata vs sta
 (Compute % difference as: (PE - source) / source × 100. Thresholds: <10% Excellent, 10-25% Acceptable, 25-50% Review needed, >50% Likely error. Always include a 1-sentence explanation of likely discrepancy sources.)
 
 ### Parameter changes
-| Parameter | Period | Value |
-|-----------|--------|-------|
-(from reform_impacts.reform_params — format rates as "0.0445 (4.45%)", amounts with commas)
+| Parameter | Period | Value | Bill Reference |
+|-----------|--------|-------|----------------|
+(from reform_impacts.reform_params — format rates as "0.0445 (4.45%)", amounts with commas. Bill Reference comes from bill-researcher provisions[].bill_section — the exact section/subsection of the bill that mandates this parameter change. E.g., "Section 2, amending §59-10-104(2)(a)" or "Lines 15-22".)
 
 ### Key results
 | Metric | Value |

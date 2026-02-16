@@ -46,6 +46,7 @@ Single-parameter provision:
 ```json
 {
   "parameter": "gov.states.ut.tax.income.rate",
+  "bill_section": "Section 2, amending §59-10-104(2)(a)",
   "label": "Utah Income Tax Rate",
   "baseline": "4.5%",
   "reform": "4.45%",
@@ -60,6 +61,7 @@ Grouped multi-parameter provision (use `changes` array + `parameters` array):
     "gov.states.ut.tax.income.credits.ctc.reduction.start.SINGLE",
     "gov.states.ut.tax.income.credits.ctc.reduction.start.HEAD_OF_HOUSEHOLD"
   ],
+  "bill_section": "Section 3, amending §59-10-1022(3)",
   "label": "Child Tax Credit Phase-out Thresholds",
   "baseline": "$43,000",
   "reform": "$27,000",
@@ -75,7 +77,10 @@ Grouped multi-parameter provision (use `changes` array + `parameters` array):
 - `parameter`: Full PE parameter path (for single-parameter provisions)
 - `parameters`: Array of full PE parameter paths (for grouped provisions)
 
-This enables the PR template to show exact parameter paths alongside human-readable labels for verification.
+**REQUIRED**: Every provision MUST include:
+- `bill_section`: The exact bill section that mandates this change (from bill-researcher output). E.g., `"Section 2, amending §59-10-104(2)(a)"` or `"Lines 15-22"`. Carry this through from the bill-researcher provisions.
+
+This enables the PR template to show exact parameter paths and bill references alongside human-readable labels for verification.
 
 ### Grouping Rules
 
@@ -168,6 +173,7 @@ Reform JSON: {
         "gov.states.ut.tax.income.credits.earned_income.rate",
         "gov.contrib.states.ut.hb210.in_effect"
       ],
+      "bill_section": "Section 4, amending §59-10-1003",
       "label": "Earned Income Tax Credit",
       "baseline": "20% of federal EITC",
       "reform": "0% (replaced by HB210 module)",
@@ -182,6 +188,7 @@ Reform JSON: {
         "gov.states.ut.tax.income.credits.ctc.reduction.start.SINGLE",
         "gov.states.ut.tax.income.credits.ctc.reduction.start.HEAD_OF_HOUSEHOLD"
       ],
+      "bill_section": "Section 3, amending §59-10-1022(3)",
       "label": "Child Tax Credit Phase-out Thresholds",
       "baseline": "$43,000",
       "reform": "$27,000",
