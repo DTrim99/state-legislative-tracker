@@ -6,11 +6,14 @@ import { useData } from "./context/DataContext";
 import { stateData } from "./data/states";
 import { colors, mapColors, typography, spacing } from "./designTokens";
 import { track } from "./lib/analytics";
+import { BASE_PATH } from "./lib/basePath";
 
 function parsePath() {
   // Support old hash URLs for backward compat
   const hash = window.location.hash.replace(/^#/, "");
-  const path = hash || window.location.pathname.replace(/^\//, "");
+  // Strip BASE_PATH prefix before parsing
+  const raw = hash || window.location.pathname;
+  const path = (BASE_PATH ? raw.replace(BASE_PATH, "") : raw).replace(/^\//, "");
   if (!path) return { state: null, billId: null };
   const parts = path.split("/");
   const state = parts[0].toUpperCase();
@@ -36,7 +39,7 @@ function App() {
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, "");
     if (hash) {
-      history.replaceState(null, "", "/" + hash);
+      history.replaceState(null, "", BASE_PATH + "/" + hash);
     }
   }, []);
 
@@ -44,10 +47,10 @@ function App() {
     setSelectedState(abbr);
     setInitialBillId(null);
     if (abbr) {
-      history.pushState(null, "", "/" + abbr);
+      history.pushState(null, "", BASE_PATH + "/" + abbr);
       track("state_selected", { state_abbr: abbr, state_name: stateData[abbr]?.name });
     } else {
-      history.pushState(null, "", "/");
+      history.pushState(null, "", BASE_PATH + "/");
       window.parent.postMessage({ type: "pathchange", path: "/" }, "*");
       window.parent.postMessage({ type: "hashchange", hash: "" }, "*");
     }
@@ -59,12 +62,15 @@ function App() {
       setSelectedState(state);
       setInitialBillId(billId);
       // Notify parent frame of path change for deep linking
+      const strippedPath = BASE_PATH
+        ? window.location.pathname.replace(BASE_PATH, "")
+        : window.location.pathname;
       window.parent.postMessage(
-        { type: "pathchange", path: window.location.pathname },
+        { type: "pathchange", path: strippedPath },
         "*",
       );
       window.parent.postMessage(
-        { type: "hashchange", hash: window.location.pathname.replace(/^\//, "") },
+        { type: "hashchange", hash: strippedPath.replace(/^\//, "") },
         "*",
       );
     };

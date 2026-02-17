@@ -5,6 +5,7 @@ import ResearchCard from "./ResearchCard";
 import ReformAnalyzer from "./reform/ReformAnalyzer";
 import { colors, typography, spacing } from "../designTokens";
 import { track } from "../lib/analytics";
+import { BASE_PATH } from "../lib/basePath";
 
 const CloseIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -235,7 +236,7 @@ const StatePanel = memo(({ stateAbbr, onClose, initialBillId }) => {
                     if (bill.reformConfig) {
                       track("bill_clicked", { state_abbr: stateAbbr, bill_id: bill.bill, has_reform: true });
                       setActiveBill(bill);
-                      history.pushState(null, "", `/${stateAbbr}/${bill.id}`);
+                      history.pushState(null, "", `${BASE_PATH}/${stateAbbr}/${bill.id}`);
                       window.parent.postMessage({ type: "pathchange", path: `/${stateAbbr}/${bill.id}` }, "*");
                       window.parent.postMessage({ type: "hashchange", hash: `${stateAbbr}/${bill.id}` }, "*");
                     }
@@ -490,7 +491,7 @@ const StatePanel = memo(({ stateAbbr, onClose, initialBillId }) => {
           bill={activeBill}
           onClose={() => {
             setActiveBill(null);
-            history.pushState(null, "", `/${stateAbbr}`);
+            history.pushState(null, "", `${BASE_PATH}/${stateAbbr}`);
             window.parent.postMessage({ type: "pathchange", path: `/${stateAbbr}` }, "*");
             window.parent.postMessage({ type: "hashchange", hash: stateAbbr }, "*");
           }}

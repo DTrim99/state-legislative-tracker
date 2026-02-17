@@ -14,7 +14,7 @@ REPO_URL = "https://github.com/PolicyEngine/state-legislative-tracker.git"
 BRANCH = "main"
 
 # Bump this when source code changes to rebuild the app layer
-APP_VERSION = "v21"
+APP_VERSION = "v22"
 
 # Evaluated at deploy time — unique command string busts Modal's layer cache
 _now = datetime.datetime.utcnow().isoformat()
@@ -76,9 +76,9 @@ def web():
     _routes_file = f"{dist_path}/_valid_routes.json"
     valid_routes = set(json.load(open(_routes_file))) if os.path.isfile(_routes_file) else set()
 
-    # Serve static assets
-    if os.path.exists(f"{dist_path}/assets"):
-        api.mount("/assets", StaticFiles(directory=f"{dist_path}/assets"), name="assets")
+    # Serve static assets (renamed from assets/ to _tracker/ to avoid collisions with proxy host)
+    if os.path.exists(f"{dist_path}/_tracker"):
+        api.mount("/_tracker", StaticFiles(directory=f"{dist_path}/_tracker"), name="tracker_assets")
 
     @api.get("/{full_path:path}")
     async def serve_spa(full_path: str):
