@@ -36,7 +36,15 @@ Use WebFetch or WebSearch to find the bill page.
 Fetch the bill text. Look for:
 - Enrolled/chaptered version if passed
 - Latest version if in progress
-- PDF links may need special handling
+
+**If the bill is available as HTML**, use WebFetch to get the text.
+
+**If the bill is PDF-only** (common for enrolled/chaptered versions), follow the process in `fetch-pdf.md`:
+```bash
+curl -L -o /tmp/{state}-{bill}.pdf "URL"
+pdftotext /tmp/{state}-{bill}.pdf /tmp/{state}-{bill}.txt
+```
+Then read the extracted text. This gives you exact bill language with section references.
 
 ### Step 3: Identify Policy Changes
 

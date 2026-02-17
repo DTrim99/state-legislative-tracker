@@ -138,8 +138,14 @@ When comparing PolicyEngine results to fiscal notes:
 ## Tools Available
 
 - `WebSearch`: Find fiscal notes and analyses
-- `WebFetch`: Fetch and extract content from URLs
+- `WebFetch`: Fetch and extract content from HTML URLs
 - `Read`: Read cached documents
+- **PDF extraction**: Fiscal notes are almost always PDFs. Use the process in `fetch-pdf.md` instead of WebFetch:
+  ```bash
+  curl -L -o /tmp/{state}-{bill}-fiscal.pdf "URL"
+  pdftotext /tmp/{state}-{bill}-fiscal.pdf /tmp/{state}-{bill}-fiscal.txt
+  ```
+  Then read the extracted text for revenue estimates and methodology details.
 
 ## Tips
 
