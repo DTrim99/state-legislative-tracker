@@ -5,6 +5,7 @@ Builds from GitHub main branch.
 Deploy with: modal deploy modal_app.py
 """
 
+import datetime
 import modal
 
 app = modal.App("state-research-tracker")
@@ -12,7 +13,19 @@ app = modal.App("state-research-tracker")
 REPO_URL = "https://github.com/PolicyEngine/state-legislative-tracker.git"
 BRANCH = "main"
 
-# Image that clones repo, installs deps, and builds
+# Bump this when source code changes to rebuild the app layer
+APP_VERSION = "v20"
+
+# Evaluated at deploy time — unique command string busts Modal's layer cache
+_now = datetime.datetime.utcnow().isoformat()
+
+SUPABASE_ANON_KEY = (
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZm"
+    "Z25ncWxnZnN2cWFydGlsZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MjQ4OTgsImV4c"
+    "CI6MjA4NDAwMDg5OH0.FprGrDgkfT0j3nK51VGtCozs6y1pfhtZ07qDUHBm8Go"
+)
+
+# Image: two layers so prerender always runs fresh while app build stays cached
 image = (
     modal.Image.debian_slim(python_version="3.11")
     .apt_install("curl", "ca-certificates", "git")
@@ -22,17 +35,20 @@ image = (
         "apt-get install -y nodejs",
     )
     .run_commands(
-        # Clone repo and build - date command busts cache on each deploy
-        "date && echo 'v20'",
+        # Layer 1: Clone, install, build — cached until APP_VERSION is bumped
+        f"echo 'app-build: {APP_VERSION}'",
         f"git clone --branch {BRANCH} --single-branch {REPO_URL} /app",
         "cd /app && npm install --legacy-peer-deps",
         # Anon key is public (read-only, row-level security enforced)
         "cd /app && VITE_SUPABASE_URL=https://ffgngqlgfsvqartilful.supabase.co"
-        " VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZ25ncWxnZnN2cWFydGlsZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MjQ4OTgsImV4cCI6MjA4NDAwMDg5OH0.FprGrDgkfT0j3nK51VGtCozs6y1pfhtZ07qDUHBm8Go"
+        f" VITE_SUPABASE_ANON_KEY={SUPABASE_ANON_KEY}"
         " VITE_POSTHOG_KEY=phc_jrd8DSkxBiB4qr7mxqzizIFh0sIIZ0mSNSNGepllyGx"
         " npm run build",
-        # Pre-render bill pages for SEO (uses public anon key)
-        "cd /app && SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZmZ25ncWxnZnN2cWFydGlsZnVsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0MjQ4OTgsImV4cCI6MjA4NDAwMDg5OH0.FprGrDgkfT0j3nK51VGtCozs6y1pfhtZ07qDUHBm8Go"
+    )
+    .run_commands(
+        # Layer 2: Pre-render — cache-busted every deploy to pick up new bills
+        f"echo 'prerender: {_now}'",
+        f"cd /app && SUPABASE_ANON_KEY={SUPABASE_ANON_KEY}"
         " node scripts/prerender.mjs",
     )
     .pip_install("fastapi", "uvicorn", "aiofiles")
