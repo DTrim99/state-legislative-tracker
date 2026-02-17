@@ -65,13 +65,47 @@ State-specific policy centers (see expanded list in "When no fiscal note exists"
 - Rhode Island: Economic Progress Institute
 - West Virginia: WV Center on Budget & Policy
 
-### Step 3: Extract Estimates
+### Step 3: Extract and Decompose Estimates
 
 From each source, extract:
 - Revenue impact (cost/savings to state)
 - Time period (annual, 5-year, 10-year)
 - Key assumptions
 - Methodology notes
+
+#### CRITICAL: Apples-to-Apples Comparison
+
+Before comparing ANY external estimate to PE, verify that it covers **exactly the same thing**. Most comparison errors come from naively citing a number that covers a different scope. Work through these checks:
+
+**1. Scope: Does the estimate cover this bill alone, or a basket of reforms?**
+- Omnibus/package bills bundle many provisions. The headline number (e.g., "-$641.7M") is useless for validating one provision.
+- Look for **per-provision line items** in the fiscal note. Use those, not the total.
+- If the fiscal note doesn't break out line items, say so explicitly — don't use the total as a comparison point.
+
+**2. Time period: Same calendar/fiscal year?**
+- States use fiscal years that don't align with calendar/tax years. Kansas FY2024 = July 2023–June 2024, which blends 30% of TY2024 + 70% of TY2023.
+- PE models a full tax year. A fiscal note's "FY2024" number ≠ PE's "TY2024" number.
+- If periods don't match, explain the blending and why direct comparison is misleading.
+- Watch for cumulative vs annual: some estimates grow each year (e.g., a COLA that compounds) — don't compare a Year 3 cumulative figure to PE's Year 1 estimate.
+
+**3. Provisions: Same parameters changed?**
+- A "standard deduction increase" in one bill may include COLA indexing for all filing statuses across multiple years, while another is a one-time flat increase for specific statuses.
+- List exactly which provisions the external estimate covers vs which ones PE models.
+
+**4. Baseline: Same starting point?**
+- External estimates may use a different base year or different current-law values.
+- Example: A 2023 fiscal note assumed a $3,500 single standard deduction; current law is now $3,605. The same dollar increase produces a different percentage change from each baseline.
+
+**5. When comparison is not meaningful, say so clearly.**
+- Don't force a comparison ratio or percentage difference when the scopes don't align.
+- Instead, explain what the external estimate covers, what PE covers, and why they differ.
+- Provide whatever calibration IS possible (e.g., "PE's estimate for a similar-sized reform is internally consistent with the line item from the omnibus note").
+
+**Example — KS HB2629 vs HB 2457 omnibus:**
+> HB 2457 was a $641.7M omnibus bill. Its "Standard Deduction COLA" line item (-$19.8M FY2024) included: all filing statuses, a $500 single increase in TY2023, 4%/3%/2% annual COLA for TY2024-2026, and fiscal year blending (FY2024 = 30% TY2024 + 70% TY2023). HB2629 is a one-time $200-$400 increase from a higher baseline ($3,605 vs $3,500), with no COLA. Direct comparison is misleading — instead we simulated HB 2457's TY2024 values in PE (-$9.1M) alongside HB2629 (-$8.9M) and confirmed internal consistency.
+
+**Example — CT SB00078 vs Tax Expenditure Report:**
+> CT's Tax Expenditure Report shows the total SS benefit deduction costs $223M/year (all filers). SB00078 only eliminates the income threshold for above-threshold filers. PE's -$56M = 25% of $223M — internally consistent with eliminating the 25% taxable portion for that subgroup. The $223M figure is NOT a comparison point for the bill; it's an upper bound for the entire provision.
 
 ### Step 4: Back-of-Envelope Check — REQUIRED
 
