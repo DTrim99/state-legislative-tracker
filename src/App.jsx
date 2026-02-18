@@ -48,6 +48,8 @@ function App() {
     setInitialBillId(null);
     if (abbr) {
       history.pushState(null, "", BASE_PATH + "/" + abbr);
+      window.parent.postMessage({ type: "pathchange", path: "/" + abbr }, "*");
+      window.parent.postMessage({ type: "hashchange", hash: abbr }, "*");
       track("state_selected", { state_abbr: abbr, state_name: stateData[abbr]?.name });
     } else {
       history.pushState(null, "", BASE_PATH + "/");
