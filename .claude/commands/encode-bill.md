@@ -368,28 +368,17 @@ Use `AskUserQuestion`:
 
 **The agent (you) creates the PR**, not the script. This lets you include context from the research phases that the script doesn't have access to.
 
-### Step 0: Add entry to `src/data/analysisDescriptions.js`
+### Step 0: Add description to `src/data/analysisDescriptions.js`
 
-**IMPORTANT**: Bill descriptions and provisions are version-controlled in `src/data/analysisDescriptions.js`. You MUST add a new entry for this bill. This is the primary source of truth for descriptions shown in the app — Supabase is the fallback.
+**IMPORTANT**: Bill descriptions are version-controlled in `src/data/analysisDescriptions.js`. You MUST add a new entry for this bill. This is the primary source for the description shown in the app — Supabase is the fallback.
 
-Read the file, then use the Edit tool to add a new entry in the correct alphabetical position (grouped by state). The entry format:
+Read the file, then use the Edit tool to add a new entry in the correct alphabetical position (grouped by state). The format is just a key-value pair:
 
 ```js
-  "{state}-{bill}": {
-    description: "{DESCRIPTION}",
-    analysisYear: {YEAR},
-    provisions: [
-      {
-        label: "{LABEL}",
-        baseline: "{BASELINE}",
-        reform: "{REFORM}",
-        explanation: "{EXPLANATION}",
-      },
-    ],
-  },
+  "{state}-{bill}": "{DESCRIPTION}",
 ```
 
-Use the same description, provisions, and analysis year from Phases 3-4. **Do NOT include** `parameter`, `parameters`, or `bill_section` fields — those are only for the Supabase record and PR body, not the frontend display.
+Use the same description from Phase 4. Everything else (provisions, analysis year, computed data) stays in Supabase only.
 
 ### Step 1: Fetch computed data from Supabase
 
