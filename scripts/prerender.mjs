@@ -393,10 +393,12 @@ async function main() {
   ].join("\n");
   writeFileSync(join(DIST, "sitemap.xml"), sitemap);
 
-  // Robots.txt
+  // Robots.txt — no Sitemap directive here because this is served from
+  // modal.run; the sitemap is submitted via Google Search Console under
+  // policyengine.org to avoid cross-domain "URL not allowed" errors.
   writeFileSync(
     join(DIST, "robots.txt"),
-    `User-agent: *\nAllow: /\n\nSitemap: ${BASE_URL}/sitemap.xml\n`,
+    `User-agent: *\nAllow: /\n`,
   );
 
   console.log(
