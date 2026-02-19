@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { getDescriptions, hasDescriptions } from '../data/analysisDescriptions';
 
 const DataContext = createContext(null);
 
@@ -54,6 +55,15 @@ export function DataProvider({ children }) {
             }
           }
 
+          // Use local descriptions as primary source (version-controlled)
+          const local = getDescriptions(item.id);
+          if (local?.provisions) {
+            provisions = local.provisions;
+          }
+          if (local?.analysisYear) {
+            modelNotes.analysis_year = local.analysisYear;
+          }
+
           impactsDict[item.id] = {
             computed: item.computed,
             computedAt: item.computed_at,
@@ -102,17 +112,19 @@ export function DataProvider({ children }) {
       .filter(item => item.state === stateAbbr && item.type === 'bill' && item.status !== 'in_review')
       .map(item => {
         const impact = reformImpacts[item.id];
+        const local = getDescriptions(item.id);
+        const description = local?.description || item.description;
         return {
           id: item.id,
           bill: extractBillNumber(item.id, item.title),
           title: item.title,
-          description: item.description,
+          description: description,
           url: item.url,
           status: formatStatus(item.status),
           reformConfig: impact?.reformParams ? {
             id: item.id,
             label: item.title,
-            description: item.description,
+            description: description,
             reform: impact.reformParams,
           } : null,
           impact: impact,
