@@ -121,9 +121,13 @@ No further action needed unless PE-US has been updated.
                                 │
                                 ▼
                     ┌───────────────────────────────┐
-                    │  PHASE 6: CREATE REVIEW PR    │
-                    │  (agent builds PR body with   │
-                    │   full research context)      │
+                    │  PHASE 6: UPDATE LOCAL FILE   │
+                    │  + CREATE REVIEW PR           │
+                    │                               │
+                    │  1. Add entry to              │
+                    │     analysisDescriptions.js   │
+                    │  2. Create bill/ branch       │
+                    │  3. Commit file change + PR   │
                     └───────────────────────────────┘
                                 │
                                 ▼
@@ -358,11 +362,23 @@ Use `AskUserQuestion`:
 - Results look correct?
 - Options: Yes, update status to computed / Re-compute with --force / Cancel
 
-## Phase 6: Create Review PR — MANDATORY
+## Phase 6: Update Local Descriptions + Create Review PR — MANDATORY
 
 **This phase is NOT optional.** Without a PR, the bill stays hidden (`in_review`) and cannot be published. You MUST complete this phase before finishing.
 
 **The agent (you) creates the PR**, not the script. This lets you include context from the research phases that the script doesn't have access to.
+
+### Step 0: Add description to `src/data/analysisDescriptions.js`
+
+**IMPORTANT**: Bill descriptions are version-controlled in `src/data/analysisDescriptions.js`. You MUST add a new entry for this bill. This is the primary source for the description shown in the app — Supabase is the fallback.
+
+Read the file, then use the Edit tool to add a new entry in the correct alphabetical position (grouped by state). The format is just a key-value pair:
+
+```js
+  "{state}-{bill}": "{DESCRIPTION}",
+```
+
+Use the same description from Phase 4. Everything else (provisions, analysis year, computed data) stays in Supabase only.
 
 ### Step 1: Fetch computed data from Supabase
 
@@ -494,7 +510,8 @@ Below the template sections, add any context from the research phases that is NO
 ```bash
 cd /Users/pavelmakarchuk/state-research-tracker
 git checkout -b bill/{reform-id}
-git commit --allow-empty -m "Bill review: {title}"
+git add src/data/analysisDescriptions.js
+git commit -m "Bill review: {title}"
 git push -u origin bill/{reform-id}
 gh pr create --title "Bill review: {title} ({STATE})" --label "bill-review" --body "$(cat <<'EOF'
 {PR_BODY}
@@ -502,6 +519,8 @@ EOF
 )"
 git checkout main
 ```
+
+The commit includes the updated `analysisDescriptions.js` with the new bill entry. When merged, the GitHub Action sets status to `published` AND the app picks up the version-controlled description.
 
 **The bill is NOT visible on the dashboard** until the PR is merged. The `publish-bill` GitHub Action extracts the reform-id from the branch name on merge and sets status to `published`.
 
