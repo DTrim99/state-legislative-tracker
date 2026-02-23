@@ -16,6 +16,7 @@ const descriptions = {
   "ct-hb5133": "Increases Connecticut's top marginal income tax rate from 6.99% to 7.99% for high earners (single filers over $500,000, joint filers over $1,000,000).",
   "ct-sb00078": "Eliminates the qualifying income thresholds for the personal income tax deductions for Social Security benefits. Currently, filers above $75K (single) / $100K (joint) can only deduct 75% of SS benefits; this bill makes 100% deductible for all.",
   "ct-sb69": "Eliminates Connecticut's state Earned Income Tax Credit (EITC), which currently provides 40% of the federal EITC to eligible low-income working families, plus a $250 bonus per qualifying child.",
+  "ct-hb5134": "Creates a new refundable child tax credit of $600 per qualifying child (up to 3 children) for Connecticut families with federal AGI below $100,000 (single) or $200,000 (joint). Children must be under age 18. Effective tax year 2026.",
 
   // Washington DC
   "dc-hjr142": "Congressional resolution disapproving the D.C. Income and Franchise Tax Conformity and Revision Emergency Amendment Act of 2025, which would eliminate the $1,000 Child Tax Credit and revert the EITC match for households with children from 100% to 85%.",
