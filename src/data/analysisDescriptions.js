@@ -13,7 +13,9 @@ const descriptions = {
   "co-hb1062": "Eliminates the $20,000 (age 55-64) and $24,000 (age 65+) caps on Colorado's pension and annuity income subtraction, allowing taxpayers age 55+ to deduct all qualifying retirement income (pensions, annuities, IRA distributions, Social Security) from state taxable income, effective tax year 2027.",
 
   // Connecticut
+  "ct-hb5133": "Increases Connecticut's top marginal income tax rate from 6.99% to 7.99% for high earners (single filers over $500,000, joint filers over $1,000,000).",
   "ct-sb00078": "Eliminates the qualifying income thresholds for the personal income tax deductions for Social Security benefits. Currently, filers above $75K (single) / $100K (joint) can only deduct 75% of SS benefits; this bill makes 100% deductible for all.",
+  "ct-sb69": "Eliminates Connecticut's state Earned Income Tax Credit (EITC), which currently provides 40% of the federal EITC to eligible low-income working families, plus a $250 bonus per qualifying child.",
 
   // Washington DC
   "dc-hjr142": "Congressional resolution disapproving the D.C. Income and Franchise Tax Conformity and Revision Emergency Amendment Act of 2025, which would eliminate the $1,000 Child Tax Credit and revert the EITC match for households with children from 100% to 85%.",
@@ -43,12 +45,17 @@ const descriptions = {
 
   // Minnesota
   "mn-hf154": "Reduces Minnesota's first-tier individual income tax rate from 5.35% to 2.8%, a 2.55 percentage point cut affecting all filing statuses. Also rebases statutory bracket thresholds to 2025 inflation-adjusted values (no real-world threshold change). Effective for tax years beginning after December 31, 2024.",
+  "mn-hf2197-ctc-wfc-marriage-penalty": "Increases CTC phaseout threshold for joint filers to $75,000 and other filers to $37,500, eliminates WFC for childless adults.",
+  "mn-hf2502-ctc-marriage-penalty": "Increases child credit phaseout threshold for joint filers from $35,000 to $63,900 to eliminate marriage penalty.",
 
   // Missouri
   "mo-sb458": "Replaces Missouri's graduated income tax brackets (0%-4.7%) with a flat 4.0% rate on all taxable income, effective January 1, 2026. Also eliminates Missouri's federal income tax deduction (\u00a7143.171), which currently allows filers to deduct 5-35% of federal taxes paid. Includes a trigger mechanism for further rate reductions toward zero contingent on a constitutional amendment (not modeled).",
 
   // Mississippi
   "ms-sb2869": "Freezes the Mississippi income tax rate at 4% permanently, reversing the HB1 (Build Up Mississippi Act) phase-out schedule that would reduce the rate to 3% by 2030 and eventually eliminate it.",
+
+  // New Jersey
+  "nj-a1185-marriage-penalty-elimination": "Revises joint filer rate brackets to eliminate the marriage penalty by widening the 1.4% and 1.75% brackets and removing the 2.45% bracket for joint, head of household, and surviving spouse filers.",
 
   // North Carolina
   "nc-h459": "Freezes the North Carolina flat individual income tax rate at 4.25% for tax years 2026 through 2028, preventing the scheduled reduction to 3.99%. Suspends the rate reduction trigger mechanism and reinstates it for 2029+ with a shortened trigger table. Motivated by Hurricane Helene recovery costs.",
