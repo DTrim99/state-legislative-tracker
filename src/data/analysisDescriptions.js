@@ -18,6 +18,7 @@ const descriptions = {
   "ct-sb69": "Eliminates Connecticut's state Earned Income Tax Credit (EITC), which currently provides 40% of the federal EITC to eligible low-income working families, plus a $250 bonus per qualifying child.",
   "ct-tax-rebate-2026": "Governor Lamont's proposed one-time tax rebate providing $200 per person ($400 for joint filers) to Connecticut residents with AGI below $200,000 (single) or $400,000 (joint).",
   "ct-hb5134": "Creates a new refundable child tax credit of $600 per qualifying child (up to 3 children) for Connecticut families with federal AGI below $100,000 (single) or $200,000 (joint). Children must be under age 18. Effective tax year 2026.",
+  "ct-sb100": "Reduces Connecticut's lowest two marginal income tax rates for taxpayers with AGI below $100,000 (single) or $200,000 (joint). Eliminates tax on the first $10,000/$20,000 of income and cuts the next bracket from 4.5% to 3%.",
 
   // Washington DC
   "dc-hjr142": "Congressional resolution disapproving the D.C. Income and Franchise Tax Conformity and Revision Emergency Amendment Act of 2025, which would eliminate the $1,000 Child Tax Credit and revert the EITC match for households with children from 100% to 85%.",
