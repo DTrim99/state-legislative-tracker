@@ -168,6 +168,7 @@ def get_builtin_reform(reform_name: str):
         "ut_hb210_s2": "policyengine_us.reforms.states.ut.ut_hb210_s2",
         "ut_hb210": "policyengine_us.reforms.states.ut.ut_hb210",
         "va_hb979": "policyengine_us.reforms.states.va.hb979.va_hb979_reform",
+        "ny_s04487_newborn_credit": "policyengine_us.reforms.states.ny.s04487.ny_s04487_newborn_credit",
     }
 
     if reform_name not in builtin_reforms:
