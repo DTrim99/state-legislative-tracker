@@ -75,6 +75,7 @@ const descriptions = {
 
   // Oklahoma
   "ok-hb2229": "Oklahoma HB2229 would double the state EITC match rate from 5% to 10% of the federal credit, effective for tax year 2026.",
+  "ok-sb2156": "Eliminates Oklahoma's personal income tax by setting all bracket rates (currently 2.5%, 3.5%, and 4.5%) to 0% for all filing statuses, effective November 1, 2026.",
 
   // Oregon
   "or-sb1507": "One provision of Oregon state budget bill SB1507 raises the EITC match rate effective for tax year 2026. The match rate increases to 17% for families with young children (under 3) and 14% for others.",
