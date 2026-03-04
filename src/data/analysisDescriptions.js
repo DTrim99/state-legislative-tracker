@@ -24,6 +24,7 @@ const descriptions = {
   "dc-hjr142": "Congressional resolution disapproving the D.C. Income and Franchise Tax Conformity and Revision Emergency Amendment Act of 2025, which would eliminate the $1,000 Child Tax Credit and revert the EITC match for households with children from 100% to 85%.",
 
   // Georgia
+  "ga-hb1001": "Accelerates Georgia's income tax rate reduction to 4.99% starting in 2026. Removes the revenue trigger conditions that could delay the reduction. We do not model the reduction in corporate tax rate to 4.99% in this analysis.",
   "ga-sb168": "Reduces Georgia's flat income tax rate from 5.09% to 4.19% for 2026, with 1.0pp annual cuts to eliminate the tax by 2031. Removes revenue trigger conditions and rate floor.",
   "ga-sb476": "Reduces Georgia income tax rate to 4.99% and increases standard deductions to $50,000 for single filers and $100,000 for joint filers, effective January 1, 2026.",
 
