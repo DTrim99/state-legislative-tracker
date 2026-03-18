@@ -240,7 +240,7 @@ export default function BillOverview({ bill, impact, reformId }) {
                 fontFamily: typography.fontFamily.primary,
                 color: colors.secondary[900],
               }}>
-                {bill?.bill || bill?.id?.toUpperCase()}
+                {bill?.title || bill?.bill || bill?.id?.toUpperCase()}
               </h4>
               <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
                 {bill?.status && <StatusBadge status={bill.status} />}
