@@ -285,7 +285,7 @@ const StatePanel = memo(({ stateAbbr, onClose, initialBillId }) => {
                       fontSize: typography.fontSize.sm,
                       fontWeight: typography.fontWeight.semibold,
                       fontFamily: typography.fontFamily.body,
-                    }}>{bill.bill}</p>
+                    }}>{bill.title}</p>
                     <p style={{
                       margin: `${spacing.xs} 0 0`,
                       color: colors.text.secondary,
