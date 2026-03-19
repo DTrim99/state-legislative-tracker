@@ -337,6 +337,13 @@ export default function ReformAnalyzer({ reformConfig, stateAbbr, billUrl, bill,
                   onSubmit={handleCalculate}
                   loading={loading}
                   stateAbbr={stateAbbr}
+                  availableYears={
+                    aggregateImpacts?.impactsByYear
+                      ? Object.keys(aggregateImpacts.impactsByYear).sort()
+                      : aggregateImpacts?.analysisYear
+                        ? [aggregateImpacts.analysisYear.toString()]
+                        : null
+                  }
                 />
               </div>
 
