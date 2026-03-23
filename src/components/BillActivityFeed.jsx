@@ -23,7 +23,7 @@ const STAGE_COLORS = {
 
 const DEFAULT_STAGE_COLOR = { bg: colors.gray[100], text: colors.gray[600], dot: colors.gray[400] };
 
-function StageBadge({ stage }) {
+export function StageBadge({ stage }) {
   const style = STAGE_COLORS[stage] || DEFAULT_STAGE_COLOR;
   return (
     <span style={{
@@ -78,7 +78,7 @@ function TimeAgo({ dateStr }) {
 
 // ============== Shared hook to fetch processed_bills ==============
 
-function useProcessedBills(stateFilter) {
+export function useProcessedBills(stateFilter) {
   const [bills, setBills] = useState([]);
   const [loading, setLoading] = useState(true);
 

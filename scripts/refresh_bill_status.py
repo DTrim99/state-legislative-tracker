@@ -290,7 +290,7 @@ def main():
 
             # Get latest action info
             latest_action = detail.get("latest_action_description", "")
-            latest_action_date = detail.get("latest_action_date", "")
+            latest_action_date = detail.get("latest_action_date", "") or None
 
             # Determine if anything changed
             old_action = bill.get("last_action", "")
