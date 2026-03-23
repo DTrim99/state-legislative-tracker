@@ -1,4 +1,5 @@
 import { colors, typography, spacing } from "../../designTokens";
+import KeyFacts from "./KeyFacts";
 
 const ExternalLinkIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -190,12 +191,15 @@ const ProvisionCard = ({ provision }) => {
   );
 };
 
-export default function BillOverview({ bill, impact }) {
+export default function BillOverview({ bill, impact, reformId }) {
   const provisions = impact?.provisions || [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: spacing.xl }}>
-      {/* Bill Details Section */}
+      {/* Key Facts Section */}
+      <KeyFacts impact={impact} reformId={reformId} />
+
+      {/* Policy Overview Section */}
       <div style={{
         backgroundColor: colors.white,
         borderRadius: spacing.radius.xl,
@@ -216,7 +220,7 @@ export default function BillOverview({ bill, impact }) {
             letterSpacing: "0.5px",
             color: colors.text.tertiary,
           }}>
-            Bill Details
+            Policy Overview
           </h3>
         </div>
 
@@ -236,7 +240,7 @@ export default function BillOverview({ bill, impact }) {
                 fontFamily: typography.fontFamily.primary,
                 color: colors.secondary[900],
               }}>
-                {bill?.bill || bill?.id?.toUpperCase()}
+                {bill?.title || bill?.bill || bill?.id?.toUpperCase()}
               </h4>
               <div style={{ display: "flex", alignItems: "center", gap: spacing.sm, marginTop: spacing.sm, flexWrap: "wrap" }}>
                 {bill?.status && <StatusBadge status={bill.status} />}
@@ -284,7 +288,7 @@ export default function BillOverview({ bill, impact }) {
         </div>
       </div>
 
-      {/* What We Model Section */}
+      {/* Included in this Analysis Section */}
       <div style={{
         backgroundColor: colors.white,
         borderRadius: spacing.radius.xl,
@@ -305,7 +309,7 @@ export default function BillOverview({ bill, impact }) {
             letterSpacing: "0.5px",
             color: colors.text.tertiary,
           }}>
-            What We Model
+            Included in this Analysis
           </h3>
         </div>
 

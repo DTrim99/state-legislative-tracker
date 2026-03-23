@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { colors, typography, spacing } from "../../designTokens";
 
 function formatWithCommas(n) {
@@ -51,7 +52,7 @@ const EXPENSE_OPTIONS = [
   { key: "pre_subsidy_rent", label: "Rent (Pre-Subsidy)" },
 ];
 
-const TAX_YEARS = ["2026", "2027", "2028", "2029"];
+const DEFAULT_TAX_YEARS = ["2026", "2027", "2028", "2029"];
 
 function AddableSection({ title, options, activeItems, onAdd, onRemove, onChangeValue }) {
   const availableOptions = options.filter((opt) => !(opt.key in activeItems));
@@ -153,8 +154,20 @@ export default function HouseholdForm({
   onChange,
   onSubmit,
   loading,
-  stateAbbr
+  stateAbbr,
+  availableYears,
 }) {
+  // Use provided years or fall back to defaults
+  const taxYears = availableYears?.length > 0 ? availableYears : DEFAULT_TAX_YEARS;
+  const firstYear = taxYears[0];
+
+  // Sync selected year when it's not in the available options
+  useEffect(() => {
+    if (!taxYears.includes(values.year)) {
+      onChange({ ...values, year: firstYear });
+    }
+  }, [firstYear, values.year]);
+
   const handleChange = (field) => (e) => {
     const value = field === "income" || field === "headAge" || field === "spouseAge"
       ? parseInt(e.target.value, 10) || 0
@@ -468,7 +481,7 @@ export default function HouseholdForm({
           onChange={handleChange("year")}
           style={{ ...inputStyle, cursor: "pointer" }}
         >
-          {TAX_YEARS.map((y) => (
+          {taxYears.map((y) => (
             <option key={y} value={y}>{y}</option>
           ))}
         </select>
