@@ -109,12 +109,45 @@ export function useProcessedBills(stateFilter) {
 
 // ============== RecentActivitySidebar (Home page right side) ==============
 
-export function RecentActivitySidebar({ onStateSelect }) {
+export function RecentActivitySidebar({ onStateSelect, onBillSelect }) {
   const { bills, loading } = useProcessedBills(null);
-  const { statesWithBills } = useData();
+  const { statesWithBills, research } = useData();
   const encodedStates = useMemo(() => new Set(Object.keys(statesWithBills)), [statesWithBills]);
+  const [tab, setTab] = useState("recent"); // "recent" | "analyzed"
 
   const recentBills = useMemo(() => bills.slice(0, 25), [bills]);
+
+  // Bills that have PE analysis (exist in research table as published bills)
+  // Also build reverse lookup: "STATE:BILLNUM" -> research id for navigation
+  const { analyzedBillIds, billToResearchId } = useMemo(() => {
+    const ids = new Set();
+    const lookup = {};
+    for (const r of research) {
+      if (r.type === "bill" && r.status !== "in_review") {
+        const parts = r.id.split("-");
+        if (parts.length >= 2) {
+          const state = parts[0].toUpperCase();
+          const num = parts.slice(1).join("").toUpperCase();
+          const key = `${state}:${num}`;
+          ids.add(key);
+          lookup[key] = { researchId: r.id, state };
+        }
+      }
+    }
+    return { analyzedBillIds: ids, billToResearchId: lookup };
+  }, [research]);
+
+  const analyzedBills = useMemo(
+    () => bills
+      .filter((b) => {
+        const norm = `${b.state}:${b.bill_number.replace(/\s+/g, "").replace(/^([A-Z]+)0+(\d)/, "$1$2").toUpperCase()}`;
+        return analyzedBillIds.has(norm);
+      })
+      .slice(0, 25),
+    [bills, analyzedBillIds],
+  );
+
+  const displayBills = tab === "analyzed" ? analyzedBills : recentBills;
 
   if (loading) {
     return (
@@ -164,21 +197,53 @@ export function RecentActivitySidebar({ onStateSelect }) {
           </svg>
           Recent Activity
         </h3>
-        <p style={{
-          margin: "2px 0 0",
-          fontSize: "11px",
-          fontFamily: typography.fontFamily.body,
-          color: colors.text.tertiary,
+        {/* Tab toggle */}
+        <div style={{
+          display: "flex",
+          gap: "2px",
+          marginTop: spacing.sm,
+          backgroundColor: colors.gray[100],
+          borderRadius: spacing.radius.md,
+          padding: "2px",
         }}>
-          {bills.length} bills tracked
-        </p>
+          {[
+            { id: "recent", label: "All Bills" },
+            { id: "analyzed", label: "Analyzed" },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              style={{
+                flex: 1,
+                padding: `3px ${spacing.sm}`,
+                border: "none",
+                borderRadius: spacing.radius.sm,
+                backgroundColor: tab === t.id ? colors.white : "transparent",
+                boxShadow: tab === t.id ? "0 1px 2px rgba(0,0,0,0.1)" : "none",
+                color: tab === t.id ? colors.secondary[900] : colors.text.tertiary,
+                fontSize: "11px",
+                fontWeight: typography.fontWeight.medium,
+                fontFamily: typography.fontFamily.body,
+                cursor: "pointer",
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* List */}
       <div style={{ maxHeight: "600px", overflowY: "auto" }}>
-        {recentBills.map((bill, i) => (
+        {displayBills.map((bill, i) => {
+          const normKey = `${bill.state}:${bill.bill_number.replace(/\s+/g, "").replace(/^([A-Z]+)0+(\d)/, "$1$2").toUpperCase()}`;
+          const match = billToResearchId[normKey];
+          const isClickable = !!match && !!onBillSelect;
+
+          return (
           <div
             key={`${bill.state}-${bill.bill_number}-${i}`}
+            onClick={isClickable ? () => onBillSelect(match.state, match.researchId) : undefined}
             style={{
               display: "flex",
               alignItems: "flex-start",
@@ -186,13 +251,14 @@ export function RecentActivitySidebar({ onStateSelect }) {
               padding: `${spacing.sm} ${spacing.md}`,
               borderBottom: `1px solid ${colors.border.light}`,
               transition: "background-color 0.1s",
+              cursor: isClickable ? "pointer" : "default",
             }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.gray[50]}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
           >
             {/* State chip */}
             <button
-              onClick={() => onStateSelect?.(bill.state)}
+              onClick={(e) => { e.stopPropagation(); onStateSelect?.(bill.state); }}
               style={{
                 flexShrink: 0,
                 padding: "2px 5px",
@@ -214,23 +280,48 @@ export function RecentActivitySidebar({ onStateSelect }) {
             {/* Bill info */}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" }}>
-                <a
-                  href={bill.legiscan_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    color: colors.secondary[900],
-                    fontSize: "12px",
-                    fontWeight: typography.fontWeight.semibold,
-                    fontFamily: typography.fontFamily.body,
-                    textDecoration: "none",
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = colors.primary[600]}
-                  onMouseLeave={(e) => e.currentTarget.style.color = colors.secondary[900]}
-                >
-                  {bill.bill_number}
-                </a>
+                {isClickable ? (
+                  <span
+                    style={{
+                      color: colors.primary[600],
+                      fontSize: "12px",
+                      fontWeight: typography.fontWeight.semibold,
+                      fontFamily: typography.fontFamily.body,
+                      textDecoration: "none",
+                    }}
+                  >
+                    {bill.bill_number}
+                  </span>
+                ) : (
+                  <a
+                    href={bill.legiscan_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      color: colors.secondary[900],
+                      fontSize: "12px",
+                      fontWeight: typography.fontWeight.semibold,
+                      fontFamily: typography.fontFamily.body,
+                      textDecoration: "none",
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = colors.primary[600]}
+                    onMouseLeave={(e) => e.currentTarget.style.color = colors.secondary[900]}
+                  >
+                    {bill.bill_number}
+                  </a>
+                )}
                 <StageBadge stage={bill.status || "Introduced"} />
+                {isClickable && (
+                  <span style={{
+                    fontSize: "9px",
+                    color: colors.primary[500],
+                    fontFamily: typography.fontFamily.body,
+                    fontWeight: typography.fontWeight.medium,
+                  }}>
+                    PE Analysis
+                  </span>
+                )}
               </div>
               <p style={{
                 margin: "1px 0 0",
@@ -248,7 +339,8 @@ export function RecentActivitySidebar({ onStateSelect }) {
 
             <TimeAgo dateStr={bill.last_action_date} />
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -315,7 +315,7 @@ function App() {
 
               {/* Right column: Recent Activity */}
               <div className="animate-fade-in-up" style={{ position: "sticky", top: "80px" }}>
-                <RecentActivitySidebar onStateSelect={handleStateSelect} />
+                <RecentActivitySidebar onStateSelect={handleStateSelect} onBillSelect={handleBillSelect} />
               </div>
             </div>
           </>

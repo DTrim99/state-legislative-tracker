@@ -271,19 +271,19 @@ const StatePanel = memo(({ stateAbbr, onNavigateHome, onBillSelect }) => {
                         const stage = stageByBill[billNum] || stageByBill[billId];
                         return stage ? <StageBadge stage={stage} /> : null;
                       })()}
-                      <span style={{
-                        display: "inline-block",
-                        padding: `2px ${spacing.xs}`,
-                        borderRadius: spacing.radius.sm,
-                        fontSize: typography.fontSize.xs,
-                        fontWeight: typography.fontWeight.medium,
-                        backgroundColor: bill.status === 'enacted' ? `${colors.primary[600]}20` :
-                                         bill.status === 'Published' ? colors.green[100] : `${colors.warning}20`,
-                        color: bill.status === 'enacted' ? colors.primary[700] :
-                               bill.status === 'Published' ? colors.green[700] : "#B45309",
-                      }}>
-                        {bill.status}
-                      </span>
+                      {bill.status !== 'Published' && (
+                        <span style={{
+                          display: "inline-block",
+                          padding: `2px ${spacing.xs}`,
+                          borderRadius: spacing.radius.sm,
+                          fontSize: typography.fontSize.xs,
+                          fontWeight: typography.fontWeight.medium,
+                          backgroundColor: bill.status === 'enacted' ? `${colors.primary[600]}20` : `${colors.warning}20`,
+                          color: bill.status === 'enacted' ? colors.primary[700] : "#B45309",
+                        }}>
+                          {bill.status}
+                        </span>
+                      )}
                       {bill.description && bill.description.length > 120
                         ? bill.description.slice(0, bill.description.lastIndexOf(' ', 120)) + '...'
                         : bill.description}
