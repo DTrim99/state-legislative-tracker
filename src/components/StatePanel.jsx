@@ -2,6 +2,7 @@ import { memo } from "react";
 import { stateData } from "../data/states";
 import { useData } from "../context/DataContext";
 import ResearchCard from "./ResearchCard";
+import { StateBillActivity, StageBadge, useProcessedBills } from "./BillActivityFeed";
 import { colors, typography, spacing } from "../designTokens";
 import { track } from "../lib/analytics";
 
@@ -51,6 +52,16 @@ function SectionHeader({ children }) {
 const StatePanel = memo(({ stateAbbr, onNavigateHome, onBillSelect }) => {
   const state = stateData[stateAbbr];
   const { getBillsForState, getResearchForState } = useData();
+  const { bills: pipelineBills } = useProcessedBills(stateAbbr);
+
+  // Build lookup: normalized bill number -> stage from processed_bills
+  // Normalize: strip spaces, strip leading zeros after letter prefix (HB0290 -> HB290, S04487 -> S4487)
+  const normalizeBillNum = (s) => s.replace(/\s+/g, "").toUpperCase().replace(/([A-Z]+)0+(\d)/, "$1$2");
+  const stageByBill = {};
+  for (const pb of pipelineBills) {
+    if (!pb.status) continue;
+    stageByBill[normalizeBillNum(pb.bill_number)] = pb.status;
+  }
 
   if (!state) return null;
 
@@ -248,21 +259,31 @@ const StatePanel = memo(({ stateAbbr, onNavigateHome, onBillSelect }) => {
                       color: colors.text.secondary,
                       fontSize: typography.fontSize.xs,
                       fontFamily: typography.fontFamily.body,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: spacing.xs,
+                      flexWrap: "wrap",
                     }}>
-                      <span style={{
-                        display: "inline-block",
-                        padding: `2px ${spacing.xs}`,
-                        borderRadius: spacing.radius.sm,
-                        marginRight: spacing.sm,
-                        fontSize: typography.fontSize.xs,
-                        fontWeight: typography.fontWeight.medium,
-                        backgroundColor: bill.status === 'enacted' ? `${colors.primary[600]}20` :
-                                         bill.status === 'Published' ? colors.green[100] : `${colors.warning}20`,
-                        color: bill.status === 'enacted' ? colors.primary[700] :
-                               bill.status === 'Published' ? colors.green[700] : "#B45309",
-                      }}>
-                        {bill.status}
-                      </span>
+                      {(() => {
+                        // Look up legislative stage from pipeline data
+                        const billNum = normalizeBillNum(bill.bill || "");
+                        const billId = normalizeBillNum((bill.id || "").replace(/^[a-z]+-/, ""));
+                        const stage = stageByBill[billNum] || stageByBill[billId];
+                        return stage ? <StageBadge stage={stage} /> : null;
+                      })()}
+                      {bill.status !== 'Published' && (
+                        <span style={{
+                          display: "inline-block",
+                          padding: `2px ${spacing.xs}`,
+                          borderRadius: spacing.radius.sm,
+                          fontSize: typography.fontSize.xs,
+                          fontWeight: typography.fontWeight.medium,
+                          backgroundColor: bill.status === 'enacted' ? `${colors.primary[600]}20` : `${colors.warning}20`,
+                          color: bill.status === 'enacted' ? colors.primary[700] : "#B45309",
+                        }}>
+                          {bill.status}
+                        </span>
+                      )}
                       {bill.description && bill.description.length > 120
                         ? bill.description.slice(0, bill.description.lastIndexOf(' ', 120)) + '...'
                         : bill.description}
@@ -314,6 +335,11 @@ const StatePanel = memo(({ stateAbbr, onNavigateHome, onBillSelect }) => {
             </div>
           </div>
         )}
+
+        {/* Tracked Bills from Pipeline */}
+        <div style={{ marginBottom: spacing["2xl"] }}>
+          <StateBillActivity stateAbbr={stateAbbr} />
+        </div>
 
         {/* In Progress Research */}
         {inProgress.length > 0 && (
