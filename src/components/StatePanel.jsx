@@ -2,6 +2,7 @@ import { memo } from "react";
 import { stateData } from "../data/states";
 import { useData } from "../context/DataContext";
 import ResearchCard from "./ResearchCard";
+import { StateBillActivity } from "./BillActivityFeed";
 import { colors, typography, spacing } from "../designTokens";
 import { track } from "../lib/analytics";
 
@@ -314,6 +315,11 @@ const StatePanel = memo(({ stateAbbr, onNavigateHome, onBillSelect }) => {
             </div>
           </div>
         )}
+
+        {/* Tracked Bills from Pipeline */}
+        <div style={{ marginBottom: spacing["2xl"] }}>
+          <StateBillActivity stateAbbr={stateAbbr} />
+        </div>
 
         {/* In Progress Research */}
         {inProgress.length > 0 && (

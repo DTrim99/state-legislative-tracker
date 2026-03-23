@@ -4,6 +4,7 @@ import StatePanel from "./components/StatePanel";
 import Breadcrumb from "./components/Breadcrumb";
 import StateSearchCombobox from "./components/StateSearchCombobox";
 import ReformAnalyzer from "./components/reform/ReformAnalyzer";
+import { RecentActivitySidebar } from "./components/BillActivityFeed";
 import { useData } from "./context/DataContext";
 import { stateData } from "./data/states";
 import { colors, mapColors, typography, spacing } from "./designTokens";
@@ -217,89 +218,105 @@ function App() {
               </p>
             </div>
 
-            {/* Map — full width */}
-            <div
-              className="animate-fade-in-up"
-              style={{
-                backgroundColor: colors.white,
-                borderRadius: spacing.radius["2xl"],
-                boxShadow: "var(--shadow-elevation-low)",
-                border: `1px solid ${colors.border.light}`,
-                padding: spacing.lg,
-                transition: "box-shadow 0.3s ease",
-                marginBottom: spacing["2xl"],
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "flex-start" }}>
-                <div style={{ flex: 1 }}>
-                  <USMap
-                    selectedState={selectedState}
-                    onStateSelect={handleStateSelect}
-                  />
+            {/* Two-column layout: Map + sidebar */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 340px",
+              gap: spacing.lg,
+              alignItems: "start",
+              marginBottom: spacing["2xl"],
+            }}>
+              {/* Left column: Map + chips + quick links */}
+              <div style={{ display: "flex", flexDirection: "column", gap: spacing.lg }}>
+                {/* Map */}
+                <div
+                  className="animate-fade-in-up"
+                  style={{
+                    backgroundColor: colors.white,
+                    borderRadius: spacing.radius["2xl"],
+                    boxShadow: "var(--shadow-elevation-low)",
+                    border: `1px solid ${colors.border.light}`,
+                    padding: spacing.lg,
+                    transition: "box-shadow 0.3s ease",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>
+                      <USMap
+                        selectedState={selectedState}
+                        onStateSelect={handleStateSelect}
+                      />
+                    </div>
+                    {/* Legend */}
+                    <div style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: spacing.sm,
+                      paddingLeft: spacing.lg,
+                      marginLeft: spacing.lg,
+                      borderLeft: `1px solid ${colors.border.light}`,
+                      alignSelf: "center",
+                      flexShrink: 0,
+                    }}>
+                      <LegendItem color={mapColors.inSession} label="In Session" />
+                      <LegendItem color={mapColors.upcoming} label="Upcoming" />
+                      <LegendItem color={mapColors.ended} label="Ended" />
+                      <LegendItem color={mapColors.noSession} label="No 2026 Session" />
+                    </div>
+                  </div>
+
+                  {/* State chips by region */}
+                  {activeStates.length > 0 && (
+                    <div style={{
+                      marginTop: spacing.lg,
+                      paddingTop: spacing.md,
+                      borderTop: `1px solid ${colors.border.light}`,
+                    }}>
+                      <h4 style={{
+                        margin: `0 0 ${spacing.md}`,
+                        color: colors.text.tertiary,
+                        fontSize: typography.fontSize.xs,
+                        fontWeight: typography.fontWeight.semibold,
+                        fontFamily: typography.fontFamily.primary,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        textAlign: "center",
+                      }}>
+                        States with Published Analysis
+                      </h4>
+                      <RegionChips states={activeStates} onSelect={handleStateSelect} />
+                    </div>
+                  )}
                 </div>
-                {/* Legend */}
+
+                {/* Quick Links */}
                 <div style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: spacing.sm,
-                  paddingLeft: spacing.lg,
-                  marginLeft: spacing.lg,
-                  borderLeft: `1px solid ${colors.border.light}`,
-                  alignSelf: "center",
-                  flexShrink: 0,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(3, 1fr)",
+                  gap: spacing.md,
                 }}>
-                  <LegendItem color={mapColors.inSession} label="In Session" />
-                  <LegendItem color={mapColors.upcoming} label="Upcoming" />
-                  <LegendItem color={mapColors.ended} label="Ended" />
-                  <LegendItem color={mapColors.noSession} label="No 2026 Session" />
+                  <QuickLinkCard
+                    href="https://policyengine.org/us/research"
+                    title="Full Research Library"
+                    description="Browse all PolicyEngine state and federal research"
+                  />
+                  <QuickLinkCard
+                    href="https://app.policyengine.org/us/reports"
+                    title="Build a Reform"
+                    description="Model your own tax policy reforms"
+                  />
+                  <QuickLinkCard
+                    href="mailto:hello@policyengine.org?subject=State Legislative Analysis Request"
+                    title="Get in Contact"
+                    description="Get custom analysis for your state's legislation"
+                  />
                 </div>
               </div>
 
-              {/* State chips by region */}
-              {activeStates.length > 0 && (
-                <div style={{
-                  marginTop: spacing.lg,
-                  paddingTop: spacing.md,
-                  borderTop: `1px solid ${colors.border.light}`,
-                }}>
-                  <h4 style={{
-                    margin: `0 0 ${spacing.md}`,
-                    color: colors.text.tertiary,
-                    fontSize: typography.fontSize.xs,
-                    fontWeight: typography.fontWeight.semibold,
-                    fontFamily: typography.fontFamily.primary,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    textAlign: "center",
-                  }}>
-                    States with Published Analysis
-                  </h4>
-                  <RegionChips states={activeStates} onSelect={handleStateSelect} />
-                </div>
-              )}
-            </div>
-
-            {/* Quick Links */}
-            <div style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(3, 1fr)",
-              gap: spacing.lg,
-            }}>
-              <QuickLinkCard
-                href="https://policyengine.org/us/research"
-                title="Full Research Library"
-                description="Browse all PolicyEngine state and federal research"
-              />
-              <QuickLinkCard
-                href="https://app.policyengine.org/us/reports"
-                title="Build a Reform"
-                description="Model your own tax policy reforms"
-              />
-              <QuickLinkCard
-                href="mailto:hello@policyengine.org?subject=State Legislative Analysis Request"
-                title="Get in Contact"
-                description="Get custom analysis for your state's legislation"
-              />
+              {/* Right column: Recent Activity */}
+              <div className="animate-fade-in-up" style={{ position: "sticky", top: "80px" }}>
+                <RecentActivitySidebar onStateSelect={handleStateSelect} />
+              </div>
             </div>
           </>
         )}
