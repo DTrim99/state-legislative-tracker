@@ -168,6 +168,8 @@ def get_builtin_reform(reform_name: str):
         "ut_hb210_s2": "policyengine_us.reforms.states.ut.ut_hb210_s2",
         "ut_hb210": "policyengine_us.reforms.states.ut.ut_hb210",
         "va_hb979": "policyengine_us.reforms.states.va.hb979.va_hb979_reform",
+        "ny_s04487_newborn_credit": "policyengine_us.reforms.states.ny.s04487.ny_s04487_newborn_credit",
+        "sc_h4216": "policyengine_us.reforms.states.sc.h4216.sc_h4216",
     }
 
     if reform_name not in builtin_reforms:
@@ -198,13 +200,16 @@ def create_reform_class(reform_params: dict):
     from policyengine_core.reforms import Reform
     from policyengine_core.periods import instant
 
-    # Check for built-in reform
-    builtin_reform_name = reform_params.pop("_use_reform", None)
-    skip_prefixes = reform_params.pop("_skip_params", [])
+    # Check for built-in reform (use .get() to avoid mutating the input dict,
+    # which gets written back to Supabase later)
+    builtin_reform_name = reform_params.get("_use_reform")
+    skip_prefixes = reform_params.get("_skip_params", [])
 
-    # Filter out parameters that the built-in reform handles
+    # Filter out internal keys and parameters that the built-in reform handles
     filtered_params = {}
     for param_path, values in reform_params.items():
+        if param_path.startswith("_"):
+            continue
         should_skip = False
         for prefix in skip_prefixes:
             if param_path.startswith(prefix):
@@ -361,11 +366,10 @@ def compute_winners_losers(baseline, reformed, state: str, year: int = 2026) -> 
     people = baseline.calculate("household_count_people", year)
     decile = baseline.calculate("household_income_decile", year).values
 
-    # Relative change formula (matching API exactly)
+    # Relative change formula (matching API fix in policyengine-api#3283)
     absolute_change = (reform_income - baseline_income).values
     capped_baseline_income = np.maximum(baseline_income.values, 1)
-    capped_reform_income = np.maximum(reform_income.values, 1) + absolute_change
-    income_change = (capped_reform_income - capped_baseline_income) / capped_baseline_income
+    income_change = absolute_change / capped_baseline_income
 
     # BOUNDS/LABELS approach matching API intra_decile_impact()
     outcome_groups = {}
@@ -499,11 +503,10 @@ def compute_district_impacts(baseline, reformed, state: str, year: int = 2026) -
         print("    Warning: Congressional district data not available")
         return {}
 
-    # Compute relative change for winners calculation (matching API intra_decile_impact)
+    # Compute relative change for winners calculation (matching API fix in policyengine-api#3283)
     absolute_change = reform_income - baseline_income
     capped_baseline = np.maximum(baseline_income, 1)
-    capped_reform = np.maximum(reform_income, 1) + absolute_change
-    relative_change = (capped_reform - capped_baseline) / capped_baseline
+    relative_change = absolute_change / capped_baseline
 
     district_impacts = {}
 
@@ -609,38 +612,23 @@ def compute_district_impacts(baseline, reformed, state: str, year: int = 2026) -
 # DATABASE WRITE
 # =============================================================================
 
-def get_changelog_version(repo_path: str) -> str:
-    """Read version from a PolicyEngine repo's changelog.yaml."""
-    changelog = Path(repo_path) / "changelog.yaml"
-    if not changelog.exists():
+def get_installed_version(package_name: str) -> str:
+    """Get version of an installed Python package."""
+    try:
+        from importlib.metadata import version
+        return version(package_name)
+    except Exception:
         return "unknown"
-    with open(changelog) as f:
-        entries = yaml.safe_load(f)
-    version = [0, 0, 1]
-    for entry in entries:
-        if "version" in entry:
-            version = [int(x) for x in str(entry["version"]).split(".")]
-        elif "bump" in entry:
-            bump = entry["bump"]
-            if bump == "major":
-                version = [version[0] + 1, 0, 0]
-            elif bump == "minor":
-                version = [version[0], version[1] + 1, 0]
-            elif bump == "patch":
-                version = [version[0], version[1], version[2] + 1]
-    return f"{version[0]}.{version[1]}.{version[2]}"
-
-
-# Repo paths (sibling directories of this project)
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-_PE_US_REPO = _PROJECT_ROOT / "policyengine-us"
-_PE_US_DATA_REPO = _PROJECT_ROOT / "policyengine-us-data"
 
 
 def get_effective_year_from_params(reform_params: dict) -> int:
     """Extract the earliest effective year from reform params."""
     earliest_year = 2100
     for param_path, values in reform_params.items():
+        if param_path.startswith("_"):
+            continue
+        if not isinstance(values, dict):
+            continue
         for period_str in values.keys():
             # Parse period string like "2027-01-01.2100-12-31" or "2027-01-01"
             if "." in period_str and len(period_str) > 10:
@@ -656,12 +644,37 @@ def get_effective_year_from_params(reform_params: dict) -> int:
     return earliest_year if earliest_year < 2100 else 2026
 
 
+def _resolve_pe_us_version(supabase, reform_id: str, reform_params: dict) -> str:
+    """Determine the policyengine-us version to store.
+
+    On re-runs (--force) where reform_params haven't changed, preserve the
+    existing version to avoid spuriously bumping it. The stored version acts
+    as "minimum API version needed", not "version last computed with".
+    """
+    current_version = get_installed_version("policyengine-us")
+
+    existing = supabase.table("reform_impacts").select(
+        "policyengine_us_version, reform_params"
+    ).eq("id", reform_id).execute()
+
+    if existing.data and len(existing.data) > 0:
+        old_version = existing.data[0].get("policyengine_us_version")
+        old_params = existing.data[0].get("reform_params")
+        # If params unchanged and we already have a version, keep the older one
+        if old_version and old_params == reform_params:
+            return old_version
+
+    return current_version
+
+
 def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: dict, analysis_year: int, multi_year: bool = False):
     """Write impacts to Supabase reform_impacts table.
 
     If multi_year=True, stores impacts in model_notes.impacts_by_year[year] instead of
     overwriting the main impact fields. This allows storing multiple years of impacts.
     """
+    pe_us_version = _resolve_pe_us_version(supabase, reform_id, reform_params)
+
     if multi_year:
         import json
         # Fetch existing record to preserve other years' data
@@ -715,9 +728,9 @@ def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: di
             "district_impacts": impacts.get("districtImpacts"),
             "reform_params": reform_params,
             "model_notes": model_notes,
-            "policyengine_us_version": get_changelog_version(str(_PE_US_REPO)),
+            "policyengine_us_version": pe_us_version,
             "dataset_name": "policyengine-us-data",
-            "dataset_version": get_changelog_version(str(_PE_US_DATA_REPO)),
+            "dataset_version": get_installed_version("policyengine-us-data"),
         }
     else:
         model_notes = {
@@ -736,9 +749,9 @@ def write_to_supabase(supabase, reform_id: str, impacts: dict, reform_params: di
             "district_impacts": impacts.get("districtImpacts"),
             "reform_params": reform_params,
             "model_notes": model_notes,
-            "policyengine_us_version": get_changelog_version(str(_PE_US_REPO)),
+            "policyengine_us_version": pe_us_version,
             "dataset_name": "policyengine-us-data",
-            "dataset_version": get_changelog_version(str(_PE_US_DATA_REPO)),
+            "dataset_version": get_installed_version("policyengine-us-data"),
         }
 
     result = supabase.table("reform_impacts").upsert(record).execute()
@@ -913,9 +926,13 @@ Examples:
             print("  Writing to Supabase...")
             write_to_supabase(supabase, reform_id, impacts, reform["reform"], sim_year, args.multi_year)
 
-            # Set status to in_review
-            print("  Setting status to in_review...")
-            update_research_status(supabase, reform_id, "in_review")
+            # Set status to in_review (skip if already published to avoid taking bills offline)
+            current_status = supabase.table("research").select("status").eq("id", reform_id).execute().data
+            if current_status and current_status[0].get("status") == "published":
+                print("  Status already 'published' — preserving (not resetting to in_review)")
+            else:
+                print("  Setting status to in_review...")
+                update_research_status(supabase, reform_id, "in_review")
 
             print(f"\n  [OK] Complete!")
             results[reform_id] = "computed"

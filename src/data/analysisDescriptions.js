@@ -13,16 +13,26 @@ const descriptions = {
   "co-hb1062": "Eliminates the $20,000 (age 55-64) and $24,000 (age 65+) caps on Colorado's pension and annuity income subtraction, allowing taxpayers age 55+ to deduct all qualifying retirement income (pensions, annuities, IRA distributions, Social Security) from state taxable income, effective tax year 2027.",
 
   // Connecticut
+  "ct-hb5114": "Connecticut HB5114 creates a refundable renter's tax credit equal to 20% of annual rent paid minus 4% of federal AGI, with a maximum credit of $2,500. Eligible renters must have federal AGI below $75,000 (single/MFS/HoH) or $150,000 (MFJ), rent a primary residence for the full year, and not be claimed as a dependent. Effective for tax years beginning January 1, 2027.",
   "ct-hb5133": "Increases Connecticut's top marginal income tax rate from 6.99% to 7.99% for high earners (single filers over $500,000, joint filers over $1,000,000).",
   "ct-sb78": "Eliminates the qualifying income thresholds for the personal income tax deductions for Social Security benefits. Currently, filers above $75K (single) / $100K (joint) can only deduct 75% of SS benefits; this bill makes 100% deductible for all.",
-  "ct-sb69": "Eliminates Connecticut's state Earned Income Tax Credit (EITC), which currently provides 40% of the federal EITC to eligible low-income working families, plus a $250 bonus per qualifying child.",
+  "ct-sb69": "Eliminates Connecticut's state Earned Income Tax Credit (EITC), which currently provides 40% of the federal EITC to eligible low-income working families. We assume the $250 child bonus is also eliminated as the EITC statute is removed from the legal code.",
+  "ct-tax-rebate-2026": "Governor Lamont's proposed one-time tax rebate providing $200 per person ($400 for joint filers) to Connecticut residents with AGI below $200,000 (single) or $400,000 (joint).",
+  "ct-hb5134": "Creates a new refundable child tax credit of $600 per qualifying child (up to 3 children) for Connecticut families with federal AGI below $100,000 (single) or $200,000 (joint). Children must be under age 18. Effective tax year 2026.",
+  "ct-sb100": "Reduces Connecticut's lowest two marginal income tax rates for taxpayers with AGI below $100,000 (single) or $200,000 (joint). Eliminates tax on the first $10,000/$20,000 of income and cuts the next bracket from 4.5% to 3%.",
 
   // Washington DC
   "dc-hjr142": "Congressional resolution disapproving the D.C. Income and Franchise Tax Conformity and Revision Emergency Amendment Act of 2025, which would eliminate the $1,000 Child Tax Credit and revert the EITC match for households with children from 100% to 85%.",
 
   // Georgia
+  "ga-hb1001": "Accelerates Georgia's income tax rate reduction to 4.99% starting in 2026. Removes the revenue trigger conditions that could delay the reduction. We do not model the reduction in corporate tax rate to 4.99% in this analysis.",
   "ga-sb168": "Reduces Georgia's flat income tax rate from 5.09% to 4.19% for 2026, with 1.0pp annual cuts to eliminate the tax by 2031. Removes revenue trigger conditions and rate floor.",
   "ga-sb476": "Reduces Georgia income tax rate to 4.99% and increases standard deductions to $50,000 for single filers and $100,000 for joint filers, effective January 1, 2026.",
+  "ga-hb880": "Hypothetical multi-year analysis of Georgia HB880 assuming all revenue growth triggers are met. Phases in annual income tax rate reductions from 4.99% (2027) to 4.19% (2035), increases standard deductions ($12,000/$24,000 single/joint in 2026 to $17,400/$34,800 in 2035), and raises the dependent exemption ($4,000 in 2026 to $5,800 in 2035). The bill also increases the retirement income exclusion cap from $65,000 to $70,000 for older retirees beginning in 2027.",
+  "ga-sb520": "Shifts Georgia from a flat 5.19% income tax to a graduated system (2%-6%), increases standard deductions to $17,000/$34,000, creates a refundable state EITC at 20% of federal, and expands the child tax credit to $1,250 (refundable). Phase 1 (2026): Standard deduction, CTC, and EITC provisions. Phase 2 (2027): Progressive tax brackets.",
+
+  // Hawaii
+  "hi-hb2306": "Freezes Hawaii income tax bracket thresholds at 2025 levels, increases top three marginal rates by 1pp (9%→10%, 10%→11%, 11%→12%), expands the child and dependent care credit (50%-5% match up to $160k AGI vs current 25%-15% up to $50k), and extends Act 163 enhanced credits (40% EITC, expanded CDCC limits, food/excise credit) through 2033. Effective for taxable years beginning after December 31, 2026.",
 
   // Iowa
   "ia-hf1020": "Modifies the Iowa child and dependent care credit by removing the $90,000 income cap and simplifying from 7 brackets to 4. Taxpayers with Iowa net income of $25,000 or more receive 50% of the federal credit (up from 30-40% for middle-income and 0% for high-income). Retroactive to January 1, 2025.",
@@ -31,6 +41,7 @@ const descriptions = {
   "il-hb4680": "Increases the Illinois Earned Income Tax Credit match from 20% to 30% of the federal EITC, effective January 1, 2026.",
 
   // Kansas
+  "ks-hb2620": "Increases the Kansas earned income tax credit from 17% to 18% of the federal EITC.",
   "ks-hb2629": "Kansas HB2629 increases the standard deduction base amounts for all filing statuses effective tax year 2026: single from $3,605 to $3,805, joint from $8,240 to $8,640, head of household from $6,180 to $6,480.",
 
   // Massachusetts
@@ -41,6 +52,7 @@ const descriptions = {
 
   // Michigan
   "mi-hb4170": "Amends the Income Tax Act to reduce Michigan's flat individual income tax rate from 4.25% to 4.05%, effective for tax years beginning after December 31, 2024 (retroactive to TY 2025).",
+  "mi-hb5519": "Reduces Michigan's flat individual income tax rate from 4.25% to 3.9%, effective January 1, 2026.",
   "mi-invest-in-kids": "Constitutional amendment imposing a 5% income tax surcharge on income above $500,000 (single) or $1 million (joint) to fund K-12 education.",
 
   // Minnesota
@@ -65,6 +77,7 @@ const descriptions = {
 
   // New York
   "ny-a05435": "Increases the personal income tax rate on taxable income between $5M and $25M from 10.30% to 10.80%, and on income over $25M from 10.90% to 11.40%. Also updates the supplemental tax incremental benefit to reflect the higher rates.",
+  "ny-s9110": "New York S9110 phases in over 10 years (2026-2035) an exemption of the first $100,000 of income for joint filers ($50,000 for single filers) from state income tax. The bill also simplifies the rate structure from 9 brackets to 6 and includes a 4% rate on income above the exempt threshold up to $500,000, with higher rates for millionaires. Top brackets (10.30% and 10.90%) expire in 2033.",
   "ny-a06774": "Increases the NY child and dependent care credit to 110% of the federal credit for taxpayers with NY AGI up to $50,000.",
   "ny-a5661": "Increases New York's Earned Income Tax Credit match rate from 30% to 45% of the federal EITC.",
   "ny-s4487": "Creates a $1,000 refundable supplemental credit for each qualifying newborn (child born in current or previous tax year, ages 0-1). This is in addition to the existing Empire State Child Credit. Effective April 1, 2026.",
@@ -72,16 +85,19 @@ const descriptions = {
 
   // Oklahoma
   "ok-hb2229": "Oklahoma HB2229 would double the state EITC match rate from 5% to 10% of the federal credit, effective for tax year 2026.",
+  "ok-sb2156": "Eliminates Oklahoma's personal income tax by setting all bracket rates (currently 2.5%, 3.5%, and 4.5%) to 0% for all filing statuses, effective November 1, 2026.",
 
   // Oregon
   "or-sb1507": "One provision of Oregon state budget bill SB1507 raises the EITC match rate effective for tax year 2026. The match rate increases to 17% for families with young children (under 3) and 14% for others.",
 
   // Rhode Island
+  "ri-hb8338": "Rhode Island HB8338 creates a refundable child tax credit of $660 per qualifying child (age 18 or under) for tax year 2027. The credit phases out by 20 percentage points for each $7,590 above $265,965 AGI. Amounts adjust annually for inflation.",
   "ri-s2364": "Rhode Island S2364 increases the state earned-income tax credit from 16% to 30% of the federal earned-income credit, effective for tax years beginning on or after January 1, 2027.",
+  "ri-sb2672": "Rhode Island SB2672 reduces personal income tax rates by 10% phased in over five years (2027-2031). All three brackets are reduced by 2% annually: first bracket from 3.75% to 3.38%, second bracket from 4.75% to 4.28%, third bracket from 5.99% to 5.39%. This analysis assumes no pause to the income tax reductions under the fiscal oversight provisions.",
 
   // South Carolina
   "sc-h3492": "South Carolina H.3492 makes the state EITC partially refundable (50% of the nonrefundable amount), effective for tax year 2026.",
-  "sc-h4216": "South Carolina H.4216 would replace the graduated income tax structure with a flat 3.99% rate across all income levels, effective for tax year 2026.",
+  "sc-h4216": "South Carolina H.4216 would replace the graduated income tax structure with two brackets: 1.99% up to $30,000 of AGI, and 5.21%. The bill would also eliminate the usage of the federal standard and itemized deductions for SC income tax purposes and replace them with the South Carolina Income Adjusted Deduction (SCIAD). Finally, H4216 would cap the state's EITC at a maximum benefit of $200, regardless of what the 125% federal match amount actually equals. H4216 is effective beginning for tax year 2026.",
 
   // Utah
   "ut-sb60": "Utah Senate Bill 60 would reduce the state flat income tax rate from 4.5% to 4.45%.",
