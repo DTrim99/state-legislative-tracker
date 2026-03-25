@@ -219,6 +219,7 @@ def main():
     parser.add_argument("--limit", type=int, default=100, help="Max bills to refresh (default: 100)")
     parser.add_argument("--dry-run", action="store_true", help="Show changes without writing")
     parser.add_argument("--all", action="store_true", help="Include all bills, not just scored ones")
+    parser.add_argument("--offset", type=int, default=0, help="Skip first N bills (resume from where you left off)")
     args = parser.parse_args()
 
     if not OPENSTATES_API_KEY:
@@ -254,11 +255,11 @@ def main():
     query = query.order("confidence_score", desc=True)
 
     result = query.execute()
-    bills = result.data[:args.limit]
+    bills = result.data[args.offset:args.offset + args.limit]
 
     print(f"Bill Status Refresh")
     print(f"===================")
-    print(f"Bills to refresh: {len(bills)} (of {len(result.data)} total)")
+    print(f"Bills to refresh: {len(bills)} (of {len(result.data)} total, offset {args.offset})")
     if args.state:
         print(f"State filter: {args.state}")
     print(f"Dry run: {args.dry_run}")

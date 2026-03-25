@@ -338,7 +338,7 @@ const StatePanel = memo(({ stateAbbr, onBillSelect }) => {
 
         {/* Tracked Bills from Pipeline */}
         <div style={{ marginBottom: spacing["2xl"] }}>
-          <StateBillActivity stateAbbr={stateAbbr} />
+          <StateBillActivity stateAbbr={stateAbbr} onBillSelect={onBillSelect} />
         </div>
 
         {/* In Progress Research */}
