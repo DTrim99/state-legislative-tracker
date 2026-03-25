@@ -61,19 +61,19 @@ export function StageBadge({ stage }) {
     <span style={{
       display: "inline-flex",
       alignItems: "center",
-      gap: "4px",
-      padding: "2px 8px",
-      borderRadius: "12px",
+      gap: "3px",
+      padding: "1px 6px",
+      borderRadius: "10px",
       backgroundColor: style.bg,
       color: style.text,
-      fontSize: typography.fontSize.xs,
+      fontSize: "10px",
       fontWeight: typography.fontWeight.medium,
       fontFamily: typography.fontFamily.body,
       whiteSpace: "nowrap",
     }}>
       <span style={{
-        width: "6px",
-        height: "6px",
+        width: "5px",
+        height: "5px",
         borderRadius: "50%",
         backgroundColor: style.dot,
       }} />
@@ -774,14 +774,43 @@ function StageSummaryBar({ bills }) {
 
 const DEFAULT_VISIBLE = 5;
 
-export function StateBillActivity({ stateAbbr }) {
+export function StateBillActivity({ stateAbbr, onBillSelect }) {
   const { bills, loading } = useProcessedBills(stateAbbr);
+  const { research } = useData();
   const [expanded, setExpanded] = useState(false);
+  const [actionBill, setActionBill] = useState(null);
+  const [requestBill, setRequestBill] = useState(null);
 
-  if (loading || !bills.length) return null;
+  const { analyzedBillIds, billToResearchId } = useMemo(() => {
+    const ids = new Set();
+    const lookup = {};
+    for (const r of research) {
+      if (r.type === "bill" && r.status !== "in_review") {
+        const parts = r.id.split("-");
+        if (parts.length >= 2) {
+          const state = parts[0].toUpperCase();
+          const num = parts.slice(1).join("").toUpperCase();
+          const key = `${state}:${num}`;
+          ids.add(key);
+          lookup[key] = { researchId: r.id, state };
+        }
+      }
+    }
+    return { analyzedBillIds: ids, billToResearchId: lookup };
+  }, [research]);
 
-  const visibleBills = expanded ? bills : bills.slice(0, DEFAULT_VISIBLE);
-  const hasMore = bills.length > DEFAULT_VISIBLE;
+  const unananalyzedBills = useMemo(
+    () => bills.filter((b) => {
+      const norm = `${b.state}:${b.bill_number.replace(/\s+/g, "").replace(/^([A-Z]+)0+(\d)/, "$1$2").toUpperCase()}`;
+      return !analyzedBillIds.has(norm);
+    }),
+    [bills, analyzedBillIds],
+  );
+
+  if (loading || !unananalyzedBills.length) return null;
+
+  const visibleBills = expanded ? unananalyzedBills : unananalyzedBills.slice(0, DEFAULT_VISIBLE);
+  const hasMore = unananalyzedBills.length > DEFAULT_VISIBLE;
 
   return (
     <div>
@@ -794,11 +823,11 @@ export function StateBillActivity({ stateAbbr }) {
         textTransform: "uppercase",
         letterSpacing: "0.5px",
       }}>
-        Bills Being Tracked ({bills.length})
+        Bills Being Tracked ({unananalyzedBills.length})
       </h3>
 
       {/* Stage summary */}
-      <StageSummaryBar bills={bills} />
+      <StageSummaryBar bills={unananalyzedBills} />
 
       {/* Bill list */}
       <div style={{
@@ -810,6 +839,9 @@ export function StateBillActivity({ stateAbbr }) {
         {visibleBills.map((bill, i) => (
           <div
             key={`${bill.bill_number}-${i}`}
+            onClick={() => {
+              setActionBill({ ...bill, isAnalyzed: false, analysisMatch: null });
+            }}
             style={{
               display: "flex",
               alignItems: "flex-start",
@@ -818,28 +850,23 @@ export function StateBillActivity({ stateAbbr }) {
               borderBottom: i < visibleBills.length - 1 || hasMore ? `1px solid ${colors.border.light}` : "none",
               backgroundColor: colors.white,
               transition: "background-color 0.1s",
+              cursor: "pointer",
             }}
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.gray[50]}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.white}
           >
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: spacing.xs, flexWrap: "wrap" }}>
-                <a
-                  href={bill.legiscan_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <span
                   style={{
                     color: colors.secondary[900],
                     fontSize: typography.fontSize.sm,
                     fontWeight: typography.fontWeight.semibold,
                     fontFamily: typography.fontFamily.body,
-                    textDecoration: "none",
                   }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = colors.primary[600]}
-                  onMouseLeave={(e) => e.currentTarget.style.color = colors.secondary[900]}
                 >
                   {bill.bill_number}
-                </a>
+                </span>
                 <StageBadge stage={bill.status || "Introduced"} />
               </div>
               <p style={{
@@ -878,10 +905,32 @@ export function StateBillActivity({ stateAbbr }) {
             onMouseEnter={(e) => e.currentTarget.style.backgroundColor = colors.gray[100]}
             onMouseLeave={(e) => e.currentTarget.style.backgroundColor = colors.background.secondary}
           >
-            {expanded ? "Show less" : `Show all ${bills.length} bills`}
+            {expanded ? "Show less" : `Show all ${unananalyzedBills.length} bills`}
           </button>
         )}
       </div>
+      {actionBill && (
+        <BillActionModal
+          bill={actionBill}
+          onClose={() => setActionBill(null)}
+          onViewAnalysis={() => {
+            if (actionBill.analysisMatch && onBillSelect) {
+              onBillSelect(actionBill.analysisMatch.state, actionBill.analysisMatch.researchId);
+            }
+            setActionBill(null);
+          }}
+          onRequestAnalysis={() => {
+            setRequestBill(actionBill);
+            setActionBill(null);
+          }}
+        />
+      )}
+      {requestBill && (
+        <AnalysisRequestModal
+          bill={requestBill}
+          onClose={() => setRequestBill(null)}
+        />
+      )}
     </div>
   );
 }
